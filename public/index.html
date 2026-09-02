@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QualiÔnibus — Gerenciador de Dados</title>
+<style>
+  :root{
+    --accent:#475569;
+    --accent-soft:#eceef1;
+    --sucesso:#15803d;
+    --sucesso-bg:#f0faf3;
+    --sucesso-borda:#cdead9;
+    --aviso:#b45309;
+    --aviso-bg:#fdf7ec;
+    --aviso-borda:#f0e0bd;
+    --erro:#b91c1c;
+    --erro-bg:#fdf1f0;
+    --erro-borda:#f2cfcb;
+    --texto:#20242c;
+    --texto-suave:#6b7280;
+    --texto-fraco:#9aa1ac;
+    --borda:#e6e8ec;
+    --fundo:#fbfbfc;
+    --branco:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--fundo);
+    color:var(--texto);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{background:var(--branco);border-bottom:1px solid var(--borda);padding:20px 24px;}
+  header .conteudo{max-width:1080px;margin:0 auto;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  header h1{margin:0;font-size:16.5px;font-weight:700;color:var(--texto);}
+  header .separador{color:var(--texto-fraco);}
+  header p{margin:0;color:var(--texto-suave);font-size:13.5px;}
+
+  .pagina{display:flex;align-items:flex-start;gap:32px;max-width:1080px;margin:0 auto;padding:0 20px 70px;}
+
+  nav.pipeline{width:170px;flex-shrink:0;padding-top:34px;position:sticky;top:24px;display:flex;flex-direction:column;}
+  .pipeline-passo{display:flex;gap:12px;text-decoration:none;color:inherit;border-radius:10px;padding:2px 8px;margin:0 -8px;transition:background .15s, transform .15s;}
+  .pipeline-marcador{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+  .pipeline-ponto{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--branco);border:2px solid var(--borda);font-size:16px;line-height:1;transition:all .15s;}
+  .pipeline-linha{flex:1;width:2px;min-height:24px;background:var(--borda);margin:4px 0;}
+  .pipeline-corpo{padding:5px 0 26px;display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .pipeline-eyebrow{font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--texto-fraco);}
+  .pipeline-label{font-size:13.5px;font-weight:600;color:var(--texto-suave);line-height:1.3;}
+
+  a.pipeline-passo:hover{background:var(--fundo);transform:translateX(3px);}
+  a.pipeline-passo:hover .pipeline-label{color:var(--texto);}
+
+  .pipeline-erro .pipeline-ponto,.pipeline-processar .pipeline-ponto{border-color:#c7bdf0;}
+  .pipeline-relatorio .pipeline-ponto{border-color:#b9cddd;}
+  .pipeline-dados .pipeline-ponto{border-color:#cbd0d8;}
+  a.pipeline-erro:hover .pipeline-ponto,a.pipeline-processar:hover .pipeline-ponto{border-color:#4338ca;box-shadow:0 0 0 4px #eef0fc;}
+  a.pipeline-relatorio:hover .pipeline-ponto{border-color:#2B5D8A;box-shadow:0 0 0 4px #e7eff5;}
+  a.pipeline-dados:hover .pipeline-ponto{border-color:#475569;box-shadow:0 0 0 4px #eceef1;}
+
+  .pipeline-passo.is-atual .pipeline-ponto{border-color:transparent;}
+  .pipeline-erro.is-atual .pipeline-ponto,.pipeline-processar.is-atual .pipeline-ponto{background:#4338ca;box-shadow:0 0 0 4px #eef0fc;}
+  .pipeline-erro.is-atual .pipeline-eyebrow,.pipeline-processar.is-atual .pipeline-eyebrow{color:#4338ca;}
+  .pipeline-relatorio.is-atual .pipeline-ponto{background:#2B5D8A;box-shadow:0 0 0 4px #e7eff5;}
+  .pipeline-relatorio.is-atual .pipeline-eyebrow{color:#2B5D8A;}
+  .pipeline-dados.is-atual .pipeline-ponto{background:#475569;box-shadow:0 0 0 4px #eceef1;}
+  .pipeline-dados.is-atual .pipeline-eyebrow{color:#475569;}
+  .pipeline-passo.is-atual .pipeline-label{color:var(--texto);font-weight:700;}
+
+  .pipeline-separador{border:none;border-top:1px dashed var(--borda);margin:2px 0 16px;}
+
+  @media (max-width:1000px){
+    header .conteudo{max-width:880px;}
+    .pagina{flex-direction:column;max-width:880px;gap:0;}
+    nav.pipeline{position:static;width:100%;flex-direction:row;flex-wrap:wrap;padding:0 0 30px;}
+    .pipeline-separador{display:none;}
+    .pipeline-passo{flex:1;flex-direction:column;align-items:center;text-align:center;margin:0;min-width:90px;}
+    a.pipeline-passo:hover{transform:none;}
+    .pipeline-marcador{flex-direction:row;align-items:center;width:100%;}
+    .pipeline-marcador::before,.pipeline-marcador::after{content:'';flex:1;height:2px;background:var(--borda);}
+    .pipeline-passo:first-child .pipeline-marcador::before{visibility:hidden;}
+    .pipeline-passo:last-child .pipeline-marcador::after{visibility:hidden;}
+    .pipeline-ponto{margin:0 4px;}
+    .pipeline-linha{display:none;}
+    .pipeline-corpo{padding:6px 4px 0;align-items:center;}
+    .pipeline-eyebrow{display:none;}
+    .pipeline-label{font-size:11.5px;}
+  }
+
+  main{max-width:920px;flex:1 1 auto;min-width:0;padding:34px 0 0;}
+
+  .cartao{background:var(--branco);border:1px solid var(--borda);border-radius:16px;padding:24px 26px;margin-bottom:20px;box-shadow:0 1px 3px rgba(20,20,40,.04);}
+  .cartao-titulo{font-size:16px;font-weight:700;margin:0 0 4px;color:var(--texto);}
+  .cartao-descricao{margin:0 0 18px;color:var(--texto-suave);font-size:13.3px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:560px){.grid2{grid-template-columns:1fr;}}
+  .campo{margin-bottom:14px;}
+  .campo:last-child{margin-bottom:0;}
+  label.rotulo{display:block;font-size:13px;font-weight:600;color:var(--texto);margin-bottom:6px;}
+  select,input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--borda);border-radius:8px;font-size:13.8px;font-family:inherit;color:var(--texto);background:var(--branco);transition:border-color .12s;}
+  select:focus,input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+
+  .abas-tabela{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
+  .aba-tabela{padding:7px 13px;border-radius:20px;border:1px solid var(--borda);background:var(--branco);color:var(--texto-suave);font-size:12.6px;font-weight:600;cursor:pointer;}
+  .aba-tabela:hover{border-color:var(--accent);color:var(--accent);}
+  .aba-tabela.ativa{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .aba-tabela.somente-leitura::after{content:" 🔒";}
+
+  .grade-wrap{overflow-x:auto;border:1px solid var(--borda);border-radius:12px;}
+  table.grade{border-collapse:collapse;width:100%;font-size:12.6px;white-space:nowrap;}
+  table.grade th{background:var(--fundo);text-align:left;padding:9px 12px;font-weight:700;color:var(--texto-suave);border-bottom:1px solid var(--borda);position:sticky;top:0;}
+  table.grade td{padding:8px 12px;border-bottom:1px solid var(--borda);color:var(--texto);max-width:260px;overflow:hidden;text-overflow:ellipsis;}
+  table.grade tbody tr:last-child td{border-bottom:none;}
+  table.grade tbody tr:hover{background:var(--fundo);}
+  td.editavel{cursor:text;}
+  td.editavel:hover{background:var(--accent-soft);}
+  td.editando{padding:4px 6px;}
+  td.editando input{width:100%;padding:5px 7px;border:1px solid var(--accent);border-radius:5px;font-size:12.6px;font-family:inherit;}
+
+  .paginacao{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;font-size:12.6px;color:var(--texto-suave);}
+  .paginacao-botoes{display:flex;gap:8px;}
+  .btn-secundario{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;border:1px solid var(--borda);background:var(--branco);color:var(--texto-suave);font-size:12.6px;cursor:pointer;}
+  .btn-secundario:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  .btn-secundario:disabled{opacity:.45;cursor:not-allowed;}
+
+  .caixa{border-radius:10px;padding:12px 14px;font-size:13.3px;margin-top:14px;}
+  .caixa.erro{background:var(--erro-bg);border:1px solid var(--erro-borda);color:var(--erro);}
+  .caixa.sucesso{background:var(--sucesso-bg);border:1px solid var(--sucesso-borda);color:var(--sucesso);}
+  .caixa.info{background:var(--accent-soft);border:1px solid var(--borda);color:var(--texto-suave);}
+
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.12);border-top-color:var(--accent);border-radius:50%;animation:girar .7s linear infinite;vertical-align:middle;}
+  @keyframes girar{to{transform:rotate(360deg);}}
+
+  .tela-login{position:fixed;inset:0;background:var(--fundo);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+  .tela-login[hidden]{display:none;}
+  .login-card{background:var(--branco);border:1px solid var(--borda);border-radius:16px;padding:32px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.06);}
+  .login-emoji{font-size:32px;margin-bottom:8px;}
+  .login-card h2{margin:0 0 8px;font-size:17px;color:var(--texto);}
+  .login-card p{margin:0 0 18px;color:var(--texto-suave);font-size:13px;line-height:1.5;}
+  .login-card input{width:100%;padding:10px 12px;border:1px solid var(--borda);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;font-family:inherit;}
+  .login-card input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .login-card button{width:100%;padding:10px 12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .12s;}
+  .login-card button:hover{opacity:.88;}
+  .login-card button:disabled{opacity:.6;cursor:default;}
+  .login-erro{color:var(--erro);font-size:12.5px;margin:10px 0 0;}
+</style>
+</head>
+<body>
+
+<div id="tela-login" class="tela-login">
+  <div class="login-card">
+    <div class="login-emoji">🔒</div>
+    <h2>Acesso restrito</h2>
+    <p>Esta ferramenta acessa e edita dados sensíveis da Pesquisa de Satisfação. Informe a senha da equipe para continuar.</p>
+    <input type="password" id="login-senha" placeholder="Senha" autocomplete="current-password">
+    <button type="button" id="login-entrar">Entrar</button>
+    <p class="login-erro" id="login-erro" hidden></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var tela = document.getElementById("tela-login");
+  var campoSenha = document.getElementById("login-senha");
+  var botao = document.getElementById("login-entrar");
+  var erro = document.getElementById("login-erro");
+
+  function mostrarErro(msg){
+    erro.textContent = msg;
+    erro.hidden = false;
+  }
+
+  function tentarEntrar(){
+    var senha = campoSenha.value;
+    if(!senha){ return; }
+    botao.disabled = true;
+    erro.hidden = true;
+    fetch("/api/login", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({senha: senha})
+    }).then(function(r){ return r.json(); }).then(function(j){
+      if(j && j.ok){
+        window.location.reload();
+      } else {
+        botao.disabled = false;
+        mostrarErro((j && j.erro) || "Senha incorreta.");
+        campoSenha.value = "";
+        campoSenha.focus();
+      }
+    }).catch(function(){
+      botao.disabled = false;
+      mostrarErro("Erro de conexão. Tente novamente.");
+    });
+  }
+
+  botao.addEventListener("click", tentarEntrar);
+  campoSenha.addEventListener("keydown", function(ev){
+    if(ev.key === "Enter"){ tentarEntrar(); }
+  });
+
+  fetch("/api/sessao").then(function(r){ return r.json(); }).then(function(j){
+    if(j && j.autenticado){
+      tela.hidden = true;
+    } else {
+      campoSenha.focus();
+    }
+  }).catch(function(){
+    // se a checagem falhar, mantem a tela de login visivel (mais seguro)
+  });
+})();
+</script>
+
+<header>
+  <div class="conteudo">
+    <h1>QualiÔnibus</h1>
+    <span class="separador">/</span>
+    <p>Gerenciador de Dados da Pesquisa de Satisfação</p>
+  </div>
+</header>
+
+<div class="pagina">
+<nav class="pipeline" aria-label="Ferramentas QualiOnibus">
+  <a class="pipeline-passo pipeline-erro" href="https://erro-amostral.vercel.app/"><span class="pipeline-marcador"><span class="pipeline-ponto">🎯</span><span class="pipeline-linha"></span></span><span class="pipeline-corpo"><span class="pipeline-eyebrow">Etapa 1</span><span class="pipeline-label">Calcular erro amostral</span></span></a>
+  <a class="pipeline-passo pipeline-processar" href="https://processamento-da-pesquisa.vercel.app/"><span class="pipeline-marcador"><span class="pipeline-ponto">⚙️</span><span class="pipeline-linha"></span></span><span class="pipeline-corpo"><span class="pipeline-eyebrow">Etapa 2</span><span class="pipeline-label">Processar pesquisas</span></span></a>
+  <a class="pipeline-passo pipeline-relatorio" href="https://gerador-de-relatorio-delta.vercel.app/"><span class="pipeline-marcador"><span class="pipeline-ponto">📊</span><span class="pipeline-linha"></span></span><span class="pipeline-corpo"><span class="pipeline-eyebrow">Etapa 3</span><span class="pipeline-label">Gerar relatório</span></span></a>
+  <hr class="pipeline-separador">
+  <span class="pipeline-passo pipeline-dados is-atual" aria-current="step"><span class="pipeline-marcador"><span class="pipeline-ponto">🛠️</span></span><span class="pipeline-corpo"><span class="pipeline-eyebrow">Manutenção</span><span class="pipeline-label">Gerenciador de dados</span></span></span>
+</nav>
+
+<main>
+
+  <div class="cartao">
+    <h2 class="cartao-titulo">Edição</h2>
+    <p class="cartao-descricao">Escolha a edição da pesquisa cujos dados você quer consultar ou editar.</p>
+    <div class="campo">
+      <label class="rotulo" for="select-edicao">Edição</label>
+      <select id="select-edicao">
+        <option value="">Carregando edições...</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="cartao" id="cartao-tabela" hidden>
+    <h2 class="cartao-titulo">Dados</h2>
+    <p class="cartao-descricao">Tabelas com 🔒 são somente leitura (registros de auditoria). Clique numa célula das demais tabelas para editar o valor.</p>
+    <div class="abas-tabela" id="abas-tabela"></div>
+    <div id="area-grade">
+      <p class="caixa info">Escolha uma edição para ver os dados.</p>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var TABELAS_EDITAVEIS = ["edicoes", "erro_amostral", "respostas_padrao", "respostas_especifico", "respostas_brutas"];
+  var TABELAS_SOMENTE_LEITURA = ["remapeamentos", "processing_log"];
+  var RETULOS_TABELA = {
+    edicoes: "Edição",
+    erro_amostral: "Erro amostral",
+    respostas_padrao: "Respostas (padrão)",
+    respostas_especifico: "Respostas (específico)",
+    respostas_brutas: "Respostas brutas",
+    remapeamentos: "Remapeamentos",
+    processing_log: "Log de processamento",
+  };
+
+  var selectEdicao = document.getElementById("select-edicao");
+  var cartaoTabela = document.getElementById("cartao-tabela");
+  var abasTabela = document.getElementById("abas-tabela");
+  var areaGrade = document.getElementById("area-grade");
+
+  var estado = { edicaoId: null, tabela: null, pagina: 0 };
+
+  function escapeHtml(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function formatarCelula(valor){
+    if (valor === null || valor === undefined) return "";
+    if (typeof valor === "object") return JSON.stringify(valor);
+    return String(valor);
+  }
+
+  async function chamarApi(caminho, opcoes){
+    var resp = await fetch(caminho, opcoes);
+    var json = await resp.json();
+    if (resp.status === 401 && json && json.precisaLogin) {
+      window.location.reload();
+      throw new Error("Sessão expirada.");
+    }
+    return json;
+  }
+
+  async function carregarEdicoes(){
+    try{
+      var resp = await chamarApi("/api/edicoes");
+      if (!resp.ok){
+        selectEdicao.innerHTML = '<option value="">Erro ao carregar edições</option>';
+        return;
+      }
+      if (!resp.edicoes.length){
+        selectEdicao.innerHTML = '<option value="">Nenhuma edição encontrada</option>';
+        return;
+      }
+      selectEdicao.innerHTML = '<option value="">Selecione...</option>' + resp.edicoes.map(function(e){
+        return '<option value="' + e.id + '">' + escapeHtml(e.sistema) + ' ' + e.ano + '/' + e.semestre + '</option>';
+      }).join("");
+    } catch(e){
+      selectEdicao.innerHTML = '<option value="">Erro ao carregar edições</option>';
+    }
+  }
+
+  function montarAbas(){
+    var html = "";
+    TABELAS_EDITAVEIS.concat(TABELAS_SOMENTE_LEITURA).forEach(function(nome){
+      var somenteLeitura = TABELAS_SOMENTE_LEITURA.indexOf(nome) !== -1;
+      html += '<button type="button" class="aba-tabela' + (somenteLeitura ? ' somente-leitura' : '') + '" data-tabela="' + nome + '">' + escapeHtml(RETULOS_TABELA[nome] || nome) + '</button>';
+    });
+    abasTabela.innerHTML = html;
+    abasTabela.querySelectorAll(".aba-tabela").forEach(function(botao){
+      botao.addEventListener("click", function(){
+        estado.tabela = botao.dataset.tabela;
+        estado.pagina = 0;
+        atualizarAbaAtiva();
+        carregarGrade();
+      });
+    });
+  }
+
+  function atualizarAbaAtiva(){
+    abasTabela.querySelectorAll(".aba-tabela").forEach(function(botao){
+      botao.classList.toggle("ativa", botao.dataset.tabela === estado.tabela);
+    });
+  }
+
+  async function carregarGrade(){
+    if (!estado.edicaoId || !estado.tabela) return;
+    areaGrade.innerHTML = '<p class="caixa info"><span class="spinner"></span> Carregando...</p>';
+    try{
+      var resp = await chamarApi("/api/tabela?nome=" + encodeURIComponent(estado.tabela) + "&edicaoId=" + encodeURIComponent(estado.edicaoId) + "&pagina=" + estado.pagina);
+      if (!resp.ok){
+        areaGrade.innerHTML = '<p class="caixa erro">' + escapeHtml(resp.erro || "Erro ao consultar os dados.") + '</p>';
+        return;
+      }
+      renderizarGrade(resp);
+    } catch(e){
+      areaGrade.innerHTML = '<p class="caixa erro">Erro de conexão ao consultar os dados.</p>';
+    }
+  }
+
+  function renderizarGrade(resp){
+    var colunasEditaveis = resp.colunasEditaveis || [];
+    if (!resp.linhas.length){
+      areaGrade.innerHTML = '<p class="caixa info">Nenhum registro encontrado para esta edição.</p>';
+      return;
+    }
+    var colunas = ["id"].concat(resp.colunas);
+    var html = '<div class="grade-wrap"><table class="grade"><thead><tr>';
+    colunas.forEach(function(c){ html += "<th>" + escapeHtml(c) + "</th>"; });
+    html += "</tr></thead><tbody>";
+    resp.linhas.forEach(function(linha){
+      html += '<tr data-id="' + linha.id + '">';
+      colunas.forEach(function(c){
+        var editavel = colunasEditaveis.indexOf(c) !== -1;
+        html += '<td' + (editavel ? ' class="editavel" data-coluna="' + c + '"' : '') + '>' + escapeHtml(formatarCelula(linha[c])) + '</td>';
+      });
+      html += "</tr>";
+    });
+    html += "</tbody></table></div>";
+
+    var totalPaginas = Math.max(1, Math.ceil(resp.total / resp.tamanhoPagina));
+    html += '<div class="paginacao">';
+    html += '<span>' + resp.linhas.length + ' de ' + resp.total + ' linha' + (resp.total === 1 ? '' : 's') + ' — página ' + (resp.pagina + 1) + ' de ' + totalPaginas + '</span>';
+    html += '<div class="paginacao-botoes">';
+    html += '<button type="button" class="btn-secundario" id="btn-pagina-anterior"' + (resp.pagina <= 0 ? ' disabled' : '') + '>← Anterior</button>';
+    html += '<button type="button" class="btn-secundario" id="btn-pagina-proxima"' + (resp.pagina + 1 >= totalPaginas ? ' disabled' : '') + '>Próxima →</button>';
+    html += '</div></div>';
+
+    areaGrade.innerHTML = html;
+
+    var btnAnterior = document.getElementById("btn-pagina-anterior");
+    var btnProxima = document.getElementById("btn-pagina-proxima");
+    if (btnAnterior) btnAnterior.addEventListener("click", function(){ estado.pagina--; carregarGrade(); });
+    if (btnProxima) btnProxima.addEventListener("click", function(){ estado.pagina++; carregarGrade(); });
+
+    areaGrade.querySelectorAll("td.editavel").forEach(function(celula){
+      celula.addEventListener("click", function(){ iniciarEdicaoCelula(celula); });
+    });
+  }
+
+  function iniciarEdicaoCelula(celula){
+    if (celula.classList.contains("editando")) return;
+    var valorAtual = celula.textContent;
+    celula.classList.add("editando");
+    celula.innerHTML = '<input type="text">';
+    var input = celula.querySelector("input");
+    input.value = valorAtual;
+    input.focus();
+    input.select();
+
+    function confirmar(){
+      var novoValor = input.value;
+      celula.classList.remove("editando");
+      if (novoValor === valorAtual){
+        celula.textContent = valorAtual;
+        return;
+      }
+      salvarCelula(celula, novoValor, valorAtual);
+    }
+    function cancelar(){
+      celula.classList.remove("editando");
+      celula.textContent = valorAtual;
+    }
+
+    input.addEventListener("keydown", function(ev){
+      if (ev.key === "Enter"){ confirmar(); }
+      else if (ev.key === "Escape"){ cancelar(); }
+    });
+    input.addEventListener("blur", confirmar);
+  }
+
+  async function salvarCelula(celula, novoValor, valorAnterior){
+    celula.textContent = novoValor;
+    celula.style.opacity = "0.5";
+    var linha = celula.closest("tr");
+    var linhaId = linha.getAttribute("data-id");
+    var coluna = celula.getAttribute("data-coluna");
+    var valores = {};
+    valores[coluna] = novoValor;
+    try{
+      var resp = await chamarApi("/api/tabela/linha", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ tabela: estado.tabela, id: linhaId, valores: valores }),
+      });
+      celula.style.opacity = "1";
+      if (!resp.ok){
+        alert("Não foi possível salvar: " + (resp.erro || "erro desconhecido") + "\n\nO valor voltou ao original.");
+        celula.textContent = valorAnterior;
+        return;
+      }
+      celula.textContent = formatarCelula(resp.linha[coluna]);
+    } catch(e){
+      celula.style.opacity = "1";
+      celula.textContent = valorAnterior;
+      alert("Erro de conexão ao salvar. O valor voltou ao original.");
+    }
+  }
+
+  selectEdicao.addEventListener("change", function(){
+    estado.edicaoId = selectEdicao.value || null;
+    estado.pagina = 0;
+    if (!estado.edicaoId){
+      cartaoTabela.hidden = true;
+      return;
+    }
+    cartaoTabela.hidden = false;
+    if (!estado.tabela) estado.tabela = TABELAS_EDITAVEIS[0];
+    atualizarAbaAtiva();
+    carregarGrade();
+  });
+
+  montarAbas();
+  carregarEdicoes();
+})();
+</script>
+
+</body>
+</html>
