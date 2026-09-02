@@ -643,7 +643,9 @@
       fd.append("file", blobParaEnviar, respUrl.caminho.split("/").pop());
       var respPut = await fetch(respUrl.url, {
         method: "PUT",
-        headers: supabaseAnonKeyAtual ? { "apikey": supabaseAnonKeyAtual } : {},
+        headers: supabaseAnonKeyAtual
+          ? { "apikey": supabaseAnonKeyAtual, "Authorization": "Bearer " + supabaseAnonKeyAtual }
+          : {},
         body: fd,
       });
       if (!respPut.ok){
