@@ -5,7 +5,11 @@ mesmo padrão das outras 3 ferramentas do pipeline."""
 
 from __future__ import annotations
 
+import csv
+import io
+import json
 import os
+import zipfile
 from typing import Any, Optional
 
 from supabase import Client, create_client
@@ -103,7 +107,19 @@ COLUNAS_EDITAVEIS_POR_TABELA: dict[str, list[str]] = {
     "respostas_brutas": ["respostas"],
 }
 
+# Colunas por onde da pra filtrar a consulta (dropdowns na interface) -
+# so' as que fazem sentido pra "estreitar" uma tabela grande (ex.: uma
+# subpopulacao ou pergunta especifica), nao qualquer coluna.
+COLUNAS_FILTRAVEIS_POR_TABELA: dict[str, list[str]] = {
+    "erro_amostral": ["cat_subpop", "categoria_variavel", "variavel"],
+    "respostas_padrao": ["modulo", "grupo", "pergunta_prefixo"],
+    "respostas_especifico": ["subpopulacao", "modulo", "grupo", "pergunta_prefixo"],
+    "respostas_brutas": ["subpopulacao"],
+    "remapeamentos": ["pergunta_prefixo"],
+}
+
 TAMANHO_PAGINA_PADRAO = 200
+TAMANHO_LOTE_EXPORTACAO = 1000
 
 
 def listar_edicoes() -> list[dict]:
@@ -125,38 +141,52 @@ def _coluna_filtro(nome_tabela: str) -> str:
     return _COLUNAS_FILTRO_ESPECIAIS.get(nome_tabela, _COLUNA_FILTRO_PADRAO)
 
 
-def contar_linhas(nome_tabela: str, edicao_id: int) -> int:
+def _aplicar_filtros(query, nome_tabela: str, filtros: Optional[dict[str, str]]):
+    """Acrescenta um .eq() por filtro valido em `filtros` - ignora
+    silenciosamente qualquer coluna que nao esteja em
+    COLUNAS_FILTRAVEIS_POR_TABELA (nunca deixa filtrar por coluna
+    arbitraria vinda da query string) e qualquer valor vazio."""
+    if not filtros:
+        return query
+    permitidas = set(COLUNAS_FILTRAVEIS_POR_TABELA.get(nome_tabela, []))
+    for coluna, valor in filtros.items():
+        if coluna not in permitidas or valor in (None, ""):
+            continue
+        query = query.eq(coluna, valor)
+    return query
+
+
+def contar_linhas(nome_tabela: str, edicao_id: int, filtros: Optional[dict[str, str]] = None) -> int:
     if nome_tabela not in TODAS_TABELAS:
         raise ValueError(f"Tabela desconhecida: {nome_tabela}")
     sb = _supabase_client()
     coluna = _coluna_filtro(nome_tabela)
-    valor = edicao_id if coluna == "edicao_id" else int(edicao_id)
-    resp = sb.table(nome_tabela).select("id", count="exact").eq(coluna, valor).limit(1).execute()
+    query = sb.table(nome_tabela).select("id", count="exact").eq(coluna, edicao_id)
+    query = _aplicar_filtros(query, nome_tabela, filtros)
+    resp = query.limit(1).execute()
     return resp.count or 0
 
 
 def ler_pagina_tabela(
-    nome_tabela: str, edicao_id: int, pagina: int = 0, tamanho_pagina: int = TAMANHO_PAGINA_PADRAO
+    nome_tabela: str,
+    edicao_id: int,
+    pagina: int = 0,
+    tamanho_pagina: int = TAMANHO_PAGINA_PADRAO,
+    filtros: Optional[dict[str, str]] = None,
 ) -> dict[str, Any]:
-    """Uma página de linhas de `nome_tabela` para `edicao_id`, mais o total
-    de linhas (pra a interface montar a paginação) - usado tanto pra
-    mostrar a grade na tela quanto, paginando até o fim, pra montar a
-    planilha de exportação."""
+    """Uma página de linhas de `nome_tabela` para `edicao_id` (com os
+    filtros opcionais aplicados), mais o total de linhas que batem com o
+    filtro (pra a interface montar a paginação)."""
     if nome_tabela not in TODAS_TABELAS:
         raise ValueError(f"Tabela desconhecida: {nome_tabela}")
     sb = _supabase_client()
     coluna = _coluna_filtro(nome_tabela)
-    total = contar_linhas(nome_tabela, edicao_id)
+    total = contar_linhas(nome_tabela, edicao_id, filtros)
     inicio = pagina * tamanho_pagina
     fim = inicio + tamanho_pagina - 1
-    resp = (
-        sb.table(nome_tabela)
-        .select("*")
-        .eq(coluna, edicao_id)
-        .order("id")
-        .range(inicio, fim)
-        .execute()
-    )
+    query = sb.table(nome_tabela).select("*").eq(coluna, edicao_id)
+    query = _aplicar_filtros(query, nome_tabela, filtros)
+    resp = query.order("id").range(inicio, fim).execute()
     return {
         "linhas": resp.data or [],
         "total": total,
@@ -164,7 +194,41 @@ def ler_pagina_tabela(
         "tamanhoPagina": tamanho_pagina,
         "colunas": COLUNAS_POR_TABELA.get(nome_tabela, []),
         "colunasEditaveis": COLUNAS_EDITAVEIS_POR_TABELA.get(nome_tabela, []),
+        "colunasFiltraveis": COLUNAS_FILTRAVEIS_POR_TABELA.get(nome_tabela, []),
     }
+
+
+def listar_valores_distintos(nome_tabela: str, coluna: str, edicao_id: int) -> list[str]:
+    """Valores distintos de `coluna` (uma das listadas em
+    COLUNAS_FILTRAVEIS_POR_TABELA) pra esta edição - alimenta os dropdowns
+    de filtro na interface. A API REST do Supabase nao tem um DISTINCT
+    direto, entao a deduplicacao e' feita aqui, paginando a tabela
+    inteira - as tabelas em questao cabem tranquilamente em memoria por
+    edição (nunca mais que baixas dezenas de milhares de linhas)."""
+    if coluna not in COLUNAS_FILTRAVEIS_POR_TABELA.get(nome_tabela, []):
+        raise ValueError(f"Coluna nao filtravel: {nome_tabela}.{coluna}")
+    sb = _supabase_client()
+    coluna_filtro = _coluna_filtro(nome_tabela)
+    valores: set[str] = set()
+    pagina = 0
+    while True:
+        inicio = pagina * TAMANHO_LOTE_EXPORTACAO
+        resp = (
+            sb.table(nome_tabela)
+            .select(coluna)
+            .eq(coluna_filtro, edicao_id)
+            .range(inicio, inicio + TAMANHO_LOTE_EXPORTACAO - 1)
+            .execute()
+        )
+        linhas = resp.data or []
+        for linha in linhas:
+            valor = linha.get(coluna)
+            if valor not in (None, ""):
+                valores.add(valor)
+        if len(linhas) < TAMANHO_LOTE_EXPORTACAO:
+            break
+        pagina += 1
+    return sorted(valores, key=str)
 
 
 def atualizar_linha(nome_tabela: str, linha_id: int, valores: dict[str, Any]) -> dict:
@@ -183,3 +247,92 @@ def atualizar_linha(nome_tabela: str, linha_id: int, valores: dict[str, Any]) ->
     if not resp.data:
         raise ValueError("Linha não encontrada (id pode ter mudado ou já ter sido removida).")
     return resp.data[0]
+
+
+def _slug_arquivo(texto: str) -> str:
+    """minúsculo, sem acentuação, espaços/pontuação viram "_" - mesma
+    convenção usada pelo Gerador de Relatório pros nomes de arquivo
+    exportados, aqui usada pro nome da pasta de cada edição dentro do
+    .zip da base completa."""
+    import re
+    import unicodedata
+
+    sem_acento = "".join(c for c in unicodedata.normalize("NFKD", str(texto)) if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", "_", sem_acento.lower()).strip("_")
+
+
+def _colunas_exportacao(nome_tabela: str) -> list[str]:
+    """Colunas do CSV, na ordem: id, edicao_id (exceto pra "edicoes", que
+    nao tem essa coluna - "id" ja' e' a própria edição), e depois as
+    colunas de conteúdo de COLUNAS_POR_TABELA."""
+    base = ["id"] if nome_tabela == "edicoes" else ["id", "edicao_id"]
+    return base + COLUNAS_POR_TABELA.get(nome_tabela, [])
+
+
+def _gerar_linhas_completas(nome_tabela: str, edicao_id: int, filtros: Optional[dict[str, str]] = None):
+    """Gera, em lotes de TAMANHO_LOTE_EXPORTACAO, todas as linhas de
+    `nome_tabela` para `edicao_id` que batem com `filtros` - usado pra
+    exportar CSV sem carregar a tabela inteira de uma vez na memória."""
+    sb = _supabase_client()
+    coluna_filtro = _coluna_filtro(nome_tabela)
+    pagina = 0
+    while True:
+        inicio = pagina * TAMANHO_LOTE_EXPORTACAO
+        query = sb.table(nome_tabela).select("*").eq(coluna_filtro, edicao_id)
+        query = _aplicar_filtros(query, nome_tabela, filtros)
+        resp = query.order("id").range(inicio, inicio + TAMANHO_LOTE_EXPORTACAO - 1).execute()
+        linhas = resp.data or []
+        for linha in linhas:
+            yield linha
+        if len(linhas) < TAMANHO_LOTE_EXPORTACAO:
+            break
+        pagina += 1
+
+
+def gerar_csv_tabela(nome_tabela: str, edicao_id: int, filtros: Optional[dict[str, str]] = None) -> bytes:
+    """CSV (UTF-8 com BOM, pra abrir certo com acentuação no Excel) de
+    todas as linhas de `nome_tabela` para `edicao_id`, com os filtros
+    opcionais aplicados. Campos jsonb (ex.: `respostas_brutas.respostas`)
+    viram uma string JSON numa única célula."""
+    if nome_tabela not in TODAS_TABELAS:
+        raise ValueError(f"Tabela desconhecida: {nome_tabela}")
+    colunas = _colunas_exportacao(nome_tabela)
+    buffer = io.StringIO()
+    escritor = csv.DictWriter(buffer, fieldnames=colunas, extrasaction="ignore")
+    escritor.writeheader()
+    for linha in _gerar_linhas_completas(nome_tabela, edicao_id, filtros):
+        linha_formatada = {}
+        for c in colunas:
+            valor = linha.get(c)
+            if isinstance(valor, (dict, list)):
+                valor = json.dumps(valor, ensure_ascii=False)
+            linha_formatada[c] = valor
+        escritor.writerow(linha_formatada)
+    return buffer.getvalue().encode("utf-8-sig")
+
+
+def gerar_zip_edicao(edicao_id: int) -> bytes:
+    """Um .zip com um .csv por tabela (as 7), todas as linhas dessa
+    edição - "baixar tudo desta edição", sem filtro nenhum."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for nome_tabela in TODAS_TABELAS:
+            zf.writestr(f"{nome_tabela}.csv", gerar_csv_tabela(nome_tabela, edicao_id))
+    return buffer.getvalue()
+
+
+def gerar_zip_completo() -> bytes:
+    """Toda a base: um .zip com uma pasta por edição, e dentro dela um
+    .csv por tabela (as 7) - "baixar a base de dados completa". Pode
+    demorar/pesar dependendo de quantas edições existirem (respostas
+    específico/brutas são as tabelas mais pesadas por edição) - ainda
+    assim cabe tranquilamente no limite de 60s da função serverless com
+    o número de edições que a pesquisa acumula hoje (uma a duas por
+    semestre)."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for edicao in listar_edicoes():
+            pasta = _slug_arquivo(f"{edicao['sistema']}_{edicao['ano']}_{edicao['semestre']}_id{edicao['id']}")
+            for nome_tabela in TODAS_TABELAS:
+                zf.writestr(f"{pasta}/{nome_tabela}.csv", gerar_csv_tabela(nome_tabela, edicao["id"]))
+    return buffer.getvalue()

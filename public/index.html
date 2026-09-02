@@ -41,52 +41,31 @@
 
   .pagina{display:flex;align-items:flex-start;gap:32px;max-width:1080px;margin:0 auto;padding:0 20px 70px;}
 
-  nav.pipeline{width:170px;flex-shrink:0;padding-top:34px;position:sticky;top:24px;display:flex;flex-direction:column;}
-  .pipeline-passo{display:flex;gap:12px;text-decoration:none;color:inherit;border-radius:10px;padding:2px 8px;margin:0 -8px;transition:background .15s, transform .15s;}
-  .pipeline-marcador{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
-  .pipeline-ponto{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--branco);border:2px solid var(--borda);font-size:16px;line-height:1;transition:all .15s;}
-  .pipeline-linha{flex:1;width:2px;min-height:24px;background:var(--borda);margin:4px 0;}
-  .pipeline-corpo{padding:5px 0 26px;display:flex;flex-direction:column;gap:2px;min-width:0;}
-  .pipeline-eyebrow{font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--texto-fraco);}
-  .pipeline-label{font-size:13.5px;font-weight:600;color:var(--texto-suave);line-height:1.3;}
+  nav.pipeline{width:196px;flex-shrink:0;padding-top:34px;position:sticky;top:24px;display:flex;flex-direction:column;gap:4px;}
+  .item-nav{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;text-decoration:none;color:inherit;transition:background .15s;}
+  .item-nav:hover{background:var(--fundo);}
+  .chip-nav{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;}
+  .label-nav{font-size:13.3px;font-weight:600;line-height:1.3;color:var(--texto-suave);}
+  .item-nav:hover .label-nav{color:var(--texto);}
 
-  a.pipeline-passo:hover{background:var(--fundo);transform:translateX(3px);}
-  a.pipeline-passo:hover .pipeline-label{color:var(--texto);}
+  .item-nav.t-erro .chip-nav,.item-nav.t-processar .chip-nav{background:#eef0fc;color:#4338ca;}
+  .item-nav.t-relatorio .chip-nav{background:#e7eff5;color:#2B5D8A;}
+  .item-nav.t-dados .chip-nav{background:#eceef1;color:#475569;}
 
-  .pipeline-erro .pipeline-ponto,.pipeline-processar .pipeline-ponto{border-color:#c7bdf0;}
-  .pipeline-relatorio .pipeline-ponto{border-color:#b9cddd;}
-  .pipeline-dados .pipeline-ponto{border-color:#cbd0d8;}
-  a.pipeline-erro:hover .pipeline-ponto,a.pipeline-processar:hover .pipeline-ponto{border-color:#4338ca;box-shadow:0 0 0 4px #eef0fc;}
-  a.pipeline-relatorio:hover .pipeline-ponto{border-color:#2B5D8A;box-shadow:0 0 0 4px #e7eff5;}
-  a.pipeline-dados:hover .pipeline-ponto{border-color:#475569;box-shadow:0 0 0 4px #eceef1;}
+  .item-nav.ativo-nav{background:#4338ca;box-shadow:0 4px 14px -6px rgba(67,56,202,.45);}
+  .item-nav.ativo-nav .chip-nav{background:rgba(255,255,255,.2);color:#fff;}
+  .item-nav.ativo-nav .label-nav{color:#fff;font-weight:700;}
+  .item-nav.ativo-nav.t-relatorio{background:#2B5D8A;box-shadow:0 4px 14px -6px rgba(43,93,138,.45);}
+  .item-nav.ativo-nav.t-dados{background:#475569;box-shadow:0 4px 14px -6px rgba(71,85,105,.45);}
 
-  .pipeline-passo.is-atual .pipeline-ponto{border-color:transparent;}
-  .pipeline-erro.is-atual .pipeline-ponto,.pipeline-processar.is-atual .pipeline-ponto{background:#4338ca;box-shadow:0 0 0 4px #eef0fc;}
-  .pipeline-erro.is-atual .pipeline-eyebrow,.pipeline-processar.is-atual .pipeline-eyebrow{color:#4338ca;}
-  .pipeline-relatorio.is-atual .pipeline-ponto{background:#2B5D8A;box-shadow:0 0 0 4px #e7eff5;}
-  .pipeline-relatorio.is-atual .pipeline-eyebrow{color:#2B5D8A;}
-  .pipeline-dados.is-atual .pipeline-ponto{background:#475569;box-shadow:0 0 0 4px #eceef1;}
-  .pipeline-dados.is-atual .pipeline-eyebrow{color:#475569;}
-  .pipeline-passo.is-atual .pipeline-label{color:var(--texto);font-weight:700;}
-
-  .pipeline-separador{border:none;border-top:1px dashed var(--borda);margin:2px 0 16px;}
+  .divisor-nav{border:none;border-top:1px dashed var(--borda);margin:6px 8px 4px;}
 
   @media (max-width:1000px){
     header .conteudo{max-width:880px;}
     .pagina{flex-direction:column;max-width:880px;gap:0;}
-    nav.pipeline{position:static;width:100%;flex-direction:row;flex-wrap:wrap;padding:0 0 30px;}
-    .pipeline-separador{display:none;}
-    .pipeline-passo{flex:1;flex-direction:column;align-items:center;text-align:center;margin:0;min-width:90px;}
-    a.pipeline-passo:hover{transform:none;}
-    .pipeline-marcador{flex-direction:row;align-items:center;width:100%;}
-    .pipeline-marcador::before,.pipeline-marcador::after{content:'';flex:1;height:2px;background:var(--borda);}
-    .pipeline-passo:first-child .pipeline-marcador::before{visibility:hidden;}
-    .pipeline-passo:last-child .pipeline-marcador::after{visibility:hidden;}
-    .pipeline-ponto{margin:0 4px;}
-    .pipeline-linha{display:none;}
-    .pipeline-corpo{padding:6px 4px 0;align-items:center;}
-    .pipeline-eyebrow{display:none;}
-    .pipeline-label{font-size:11.5px;}
+    nav.pipeline{position:static;width:100%;flex-direction:row;flex-wrap:wrap;padding:0 0 24px;gap:8px;}
+    .item-nav{flex:1;min-width:132px;justify-content:center;text-align:center;}
+    .divisor-nav{display:none;}
   }
 
   main{max-width:920px;flex:1 1 auto;min-width:0;padding:34px 0 0;}
@@ -102,6 +81,15 @@
   label.rotulo{display:block;font-size:13px;font-weight:600;color:var(--texto);margin-bottom:6px;}
   select,input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--borda);border-radius:8px;font-size:13.8px;font-family:inherit;color:var(--texto);background:var(--branco);transition:border-color .12s;}
   select:focus,input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+
+  .linha-downloads{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+  .linha-downloads .btn-secundario{text-decoration:none;}
+
+  .linha-filtros{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px dashed var(--borda);}
+  .filtro-campo{min-width:150px;}
+  .filtro-campo label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--texto-fraco);margin-bottom:4px;}
+  .filtro-campo select{padding:7px 9px;font-size:12.8px;}
+  .link-csv{margin-left:auto;}
 
   .abas-tabela{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
   .aba-tabela{padding:7px 13px;border-radius:20px;border:1px solid var(--borda);background:var(--branco);color:var(--texto-suave);font-size:12.6px;font-weight:600;cursor:pointer;}
@@ -225,11 +213,11 @@
 
 <div class="pagina">
 <nav class="pipeline" aria-label="Ferramentas QualiOnibus">
-  <a class="pipeline-passo pipeline-erro" href="https://erro-amostral.vercel.app/"><span class="pipeline-marcador"><span class="pipeline-ponto">🎯</span><span class="pipeline-linha"></span></span><span class="pipeline-corpo"><span class="pipeline-eyebrow">Etapa 1</span><span class="pipeline-label">Calcular erro amostral</span></span></a>
-  <a class="pipeline-passo pipeline-processar" href="https://processamento-da-pesquisa.vercel.app/"><span class="pipeline-marcador"><span class="pipeline-ponto">⚙️</span><span class="pipeline-linha"></span></span><span class="pipeline-corpo"><span class="pipeline-eyebrow">Etapa 2</span><span class="pipeline-label">Processar pesquisas</span></span></a>
-  <a class="pipeline-passo pipeline-relatorio" href="https://gerador-de-relatorio-delta.vercel.app/"><span class="pipeline-marcador"><span class="pipeline-ponto">📊</span><span class="pipeline-linha"></span></span><span class="pipeline-corpo"><span class="pipeline-eyebrow">Etapa 3</span><span class="pipeline-label">Gerar relatório</span></span></a>
-  <hr class="pipeline-separador">
-  <span class="pipeline-passo pipeline-dados is-atual" aria-current="step"><span class="pipeline-marcador"><span class="pipeline-ponto">🛠️</span></span><span class="pipeline-corpo"><span class="pipeline-eyebrow">Manutenção</span><span class="pipeline-label">Gerenciador de dados</span></span></span>
+  <a class="item-nav t-erro" href="https://erro-amostral.vercel.app/"><span class="chip-nav">🎯</span><span class="label-nav">Calcular erro amostral</span></a>
+  <a class="item-nav t-processar" href="https://processamento-da-pesquisa.vercel.app/"><span class="chip-nav">⚙️</span><span class="label-nav">Processar pesquisas</span></a>
+  <a class="item-nav t-relatorio" href="https://gerador-de-relatorio-delta.vercel.app/"><span class="chip-nav">📊</span><span class="label-nav">Gerar relatório</span></a>
+  <hr class="divisor-nav">
+  <span class="item-nav t-dados ativo-nav" aria-current="step"><span class="chip-nav">🛠️</span><span class="label-nav">Gerenciador de dados</span></span>
 </nav>
 
 <main>
@@ -243,12 +231,17 @@
         <option value="">Carregando edições...</option>
       </select>
     </div>
+    <div class="linha-downloads">
+      <a id="link-baixar-edicao" class="btn-secundario" hidden>⬇ Baixar tudo desta edição (.zip)</a>
+      <a id="link-baixar-completo" class="btn-secundario" href="/api/exportar/completo">⬇ Baixar a base de dados completa (.zip)</a>
+    </div>
   </div>
 
   <div class="cartao" id="cartao-tabela" hidden>
     <h2 class="cartao-titulo">Dados</h2>
     <p class="cartao-descricao">Tabelas com 🔒 são somente leitura (registros de auditoria). Clique numa célula das demais tabelas para editar o valor.</p>
     <div class="abas-tabela" id="abas-tabela"></div>
+    <div class="linha-filtros" id="linha-filtros" hidden></div>
     <div id="area-grade">
       <p class="caixa info">Escolha uma edição para ver os dados.</p>
     </div>
@@ -275,8 +268,11 @@
   var cartaoTabela = document.getElementById("cartao-tabela");
   var abasTabela = document.getElementById("abas-tabela");
   var areaGrade = document.getElementById("area-grade");
+  var linhaFiltros = document.getElementById("linha-filtros");
+  var linkBaixarEdicao = document.getElementById("link-baixar-edicao");
 
-  var estado = { edicaoId: null, tabela: null, pagina: 0 };
+  var estado = { edicaoId: null, tabela: null, pagina: 0, filtros: {} };
+  var filtrosChaveAtual = null;
 
   function escapeHtml(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -330,6 +326,7 @@
       botao.addEventListener("click", function(){
         estado.tabela = botao.dataset.tabela;
         estado.pagina = 0;
+        estado.filtros = {};
         atualizarAbaAtiva();
         carregarGrade();
       });
@@ -342,15 +339,73 @@
     });
   }
 
+  function montarQueryTabela(){
+    var params = new URLSearchParams();
+    params.set("nome", estado.tabela);
+    params.set("edicaoId", estado.edicaoId);
+    Object.keys(estado.filtros).forEach(function(k){
+      if (estado.filtros[k]) params.set(k, estado.filtros[k]);
+    });
+    return params;
+  }
+
+  function atualizarLinkCsv(){
+    var link = document.getElementById("link-baixar-csv");
+    if (!link) return;
+    link.href = "/api/tabela/csv?" + montarQueryTabela().toString();
+  }
+
+  async function sincronizarFiltros(colunasFiltraveis){
+    var chave = estado.tabela + "|" + estado.edicaoId;
+    if (chave === filtrosChaveAtual){
+      atualizarLinkCsv();
+      return;
+    }
+    filtrosChaveAtual = chave;
+    if (!colunasFiltraveis || !colunasFiltraveis.length){
+      linhaFiltros.hidden = true;
+      linhaFiltros.innerHTML = "";
+      return;
+    }
+    linhaFiltros.hidden = false;
+    linhaFiltros.innerHTML = colunasFiltraveis.map(function(c){
+      return '<div class="filtro-campo"><label>' + escapeHtml(c) + '</label><select data-filtro="' + c + '"><option value="">Todos</option></select></div>';
+    }).join("") + '<a class="btn-secundario link-csv" id="link-baixar-csv">⬇ Baixar CSV desta consulta</a>';
+    atualizarLinkCsv();
+
+    await Promise.all(colunasFiltraveis.map(async function(c){
+      var select = linhaFiltros.querySelector('select[data-filtro="' + c + '"]');
+      select.addEventListener("change", function(){
+        estado.filtros[c] = select.value;
+        estado.pagina = 0;
+        carregarGrade();
+      });
+      try{
+        var resp = await chamarApi("/api/tabela/valores?nome=" + encodeURIComponent(estado.tabela) + "&coluna=" + encodeURIComponent(c) + "&edicaoId=" + encodeURIComponent(estado.edicaoId));
+        if (resp.ok){
+          resp.valores.forEach(function(v){
+            var opt = document.createElement("option");
+            opt.value = v;
+            opt.textContent = v;
+            select.appendChild(opt);
+          });
+        }
+      } catch(e){ /* dropdown fica so' com "Todos" */ }
+    }));
+  }
+
   async function carregarGrade(){
     if (!estado.edicaoId || !estado.tabela) return;
     areaGrade.innerHTML = '<p class="caixa info"><span class="spinner"></span> Carregando...</p>';
     try{
-      var resp = await chamarApi("/api/tabela?nome=" + encodeURIComponent(estado.tabela) + "&edicaoId=" + encodeURIComponent(estado.edicaoId) + "&pagina=" + estado.pagina);
+      var params = montarQueryTabela();
+      params.set("pagina", estado.pagina);
+      var resp = await chamarApi("/api/tabela?" + params.toString());
       if (!resp.ok){
         areaGrade.innerHTML = '<p class="caixa erro">' + escapeHtml(resp.erro || "Erro ao consultar os dados.") + '</p>';
         return;
       }
+      await sincronizarFiltros(resp.colunasFiltraveis || []);
       renderizarGrade(resp);
     } catch(e){
       areaGrade.innerHTML = '<p class="caixa erro">Erro de conexão ao consultar os dados.</p>';
@@ -459,11 +514,15 @@
   selectEdicao.addEventListener("change", function(){
     estado.edicaoId = selectEdicao.value || null;
     estado.pagina = 0;
+    estado.filtros = {};
     if (!estado.edicaoId){
       cartaoTabela.hidden = true;
+      linkBaixarEdicao.hidden = true;
       return;
     }
     cartaoTabela.hidden = false;
+    linkBaixarEdicao.hidden = false;
+    linkBaixarEdicao.href = "/api/exportar/edicao?edicaoId=" + encodeURIComponent(estado.edicaoId);
     if (!estado.tabela) estado.tabela = TABELAS_EDITAVEIS[0];
     atualizarAbaAtiva();
     carregarGrade();

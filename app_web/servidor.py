@@ -56,6 +56,16 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(dados_arquivo)
 
+    def _enviar_binario(self, conteudo: bytes, content_type: str, nome_arquivo: str) -> None:
+        """Devolve `conteudo` como download (Content-Disposition: attachment)
+        - usado pelos CSVs e .zip de exportacao."""
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(conteudo)))
+        self.send_header("Content-Disposition", f'attachment; filename="{nome_arquivo}"')
+        self.end_headers()
+        self.wfile.write(conteudo)
+
     def _rota_efetiva(self, partes, query) -> str:
         """Ver o comentário equivalente em servidor.py do Gerador de
         Relatório: local roteia por `self.path`, na Vercel o rewrite manda
@@ -100,6 +110,14 @@ class Handler(BaseHTTPRequestHandler):
             self._rota_edicoes()
         elif rota == "tabela":
             self._rota_tabela(query)
+        elif rota == "tabela/valores":
+            self._rota_tabela_valores(query)
+        elif rota == "tabela/csv":
+            self._rota_tabela_csv(query)
+        elif rota == "exportar/edicao":
+            self._rota_exportar_edicao(query)
+        elif rota == "exportar/completo":
+            self._rota_exportar_completo()
         else:
             self.send_error(404, "Rota nao encontrada")
 
@@ -147,6 +165,13 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as e:
             self._enviar_json(200, {"ok": False, "erro": f"Erro ao consultar as edições: {e}"})
 
+    def _filtros_da_query(self, query: dict, nome_tabela: str) -> dict:
+        """Extrai da query string só as colunas listadas em
+        COLUNAS_FILTRAVEIS_POR_TABELA pra essa tabela - o resto dos
+        parametros (nome, edicaoId, pagina...) e' ignorado aqui."""
+        colunas = dm.COLUNAS_FILTRAVEIS_POR_TABELA.get(nome_tabela, [])
+        return {c: (query.get(c, [""])[0] or "").strip() for c in colunas if query.get(c, [""])[0]}
+
     def _rota_tabela(self, query: dict) -> None:
         nome_tabela = (query.get("nome", [""])[0] or "").strip()
         edicao_id_bruto = (query.get("edicaoId", [""])[0] or "").strip()
@@ -160,11 +185,67 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             self._enviar_json(400, {"ok": False, "erro": "edicaoId/pagina invalidos."})
             return
+        filtros = self._filtros_da_query(query, nome_tabela)
         try:
-            resultado = dm.ler_pagina_tabela(nome_tabela, edicao_id, pagina)
+            resultado = dm.ler_pagina_tabela(nome_tabela, edicao_id, pagina, filtros=filtros)
             self._enviar_json(200, {"ok": True, **resultado})
         except Exception as e:
             self._enviar_json(200, {"ok": False, "erro": f"Erro ao consultar {nome_tabela}: {e}"})
+
+    def _rota_tabela_valores(self, query: dict) -> None:
+        nome_tabela = (query.get("nome", [""])[0] or "").strip()
+        coluna = (query.get("coluna", [""])[0] or "").strip()
+        edicao_id_bruto = (query.get("edicaoId", [""])[0] or "").strip()
+        try:
+            edicao_id = int(edicao_id_bruto)
+        except ValueError:
+            self._enviar_json(400, {"ok": False, "erro": "edicaoId invalido."})
+            return
+        try:
+            valores = dm.listar_valores_distintos(nome_tabela, coluna, edicao_id)
+            self._enviar_json(200, {"ok": True, "valores": valores})
+        except ValueError as e:
+            self._enviar_json(400, {"ok": False, "erro": str(e)})
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao consultar os valores: {e}"})
+
+    def _rota_tabela_csv(self, query: dict) -> None:
+        nome_tabela = (query.get("nome", [""])[0] or "").strip()
+        edicao_id_bruto = (query.get("edicaoId", [""])[0] or "").strip()
+        if nome_tabela not in dm.TODAS_TABELAS:
+            self._enviar_json(400, {"ok": False, "erro": "Tabela invalida ou nao informada."})
+            return
+        try:
+            edicao_id = int(edicao_id_bruto)
+        except ValueError:
+            self._enviar_json(400, {"ok": False, "erro": "edicaoId invalido."})
+            return
+        filtros = self._filtros_da_query(query, nome_tabela)
+        try:
+            csv_bytes = dm.gerar_csv_tabela(nome_tabela, edicao_id, filtros)
+            self._enviar_binario(csv_bytes, "text/csv; charset=utf-8", f"{nome_tabela}_edicao{edicao_id}.csv")
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao exportar {nome_tabela}: {e}"})
+
+    def _rota_exportar_edicao(self, query: dict) -> None:
+        edicao_id_bruto = (query.get("edicaoId", [""])[0] or "").strip()
+        try:
+            edicao_id = int(edicao_id_bruto)
+        except ValueError:
+            self._enviar_json(400, {"ok": False, "erro": "edicaoId invalido."})
+            return
+        try:
+            zip_bytes = dm.gerar_zip_edicao(edicao_id)
+            self._enviar_binario(zip_bytes, "application/zip", f"edicao_{edicao_id}.zip")
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao exportar a edição: {e}"})
+
+    def _rota_exportar_completo(self) -> None:
+        try:
+            zip_bytes = dm.gerar_zip_completo()
+            self._enviar_binario(zip_bytes, "application/zip", "base_completa_qualionibus.zip")
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao exportar a base completa: {e}"})
 
     def _rota_atualizar_linha(self, corpo: dict) -> None:
         nome_tabela = (corpo.get("tabela") or "").strip()
