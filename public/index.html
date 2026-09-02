@@ -97,6 +97,14 @@
   .aba-tabela.ativa{background:var(--accent);border-color:var(--accent);color:#fff;}
   .aba-tabela.somente-leitura::after{content:" 🔒";}
 
+  .modelo-item{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid var(--borda);border-radius:12px;background:var(--fundo);}
+  .modelo-titulo{margin:0;font-size:13.8px;font-weight:700;color:var(--texto);}
+  .modelo-status{margin:0;font-size:12.6px;color:var(--texto-suave);}
+  .modelo-item input[type=file]{font-size:12.3px;color:var(--texto-suave);}
+  .modelo-mensagem{margin:0;font-size:12.3px;}
+  .modelo-mensagem.erro{color:var(--erro);}
+  .modelo-mensagem.sucesso{color:var(--sucesso);}
+
   .grade-wrap{overflow-x:auto;border:1px solid var(--borda);border-radius:12px;}
   table.grade{border-collapse:collapse;width:100%;font-size:12.6px;white-space:nowrap;}
   table.grade th{background:var(--fundo);text-align:left;padding:9px 12px;font-weight:700;color:var(--texto-suave);border-bottom:1px solid var(--borda);position:sticky;top:0;}
@@ -244,6 +252,27 @@
     <div class="linha-filtros" id="linha-filtros" hidden></div>
     <div id="area-grade">
       <p class="caixa info">Escolha uma edição para ver os dados.</p>
+    </div>
+  </div>
+
+  <div class="cartao" id="cartao-modelos">
+    <h2 class="cartao-titulo">Modelos (relatório e síntese)</h2>
+    <p class="cartao-descricao">Envie um novo modelo SVG pra substituir o que o Gerador de Relatório usa hoje. O envio vai direto pro Supabase Storage e passa a valer nas próximas gerações em até 5 minutos.</p>
+    <div class="grid2" id="grade-modelos">
+      <div class="modelo-item" data-modelo="relatorio">
+        <h3 class="modelo-titulo">Modelo do relatório completo</h3>
+        <p class="modelo-status" data-status>Carregando...</p>
+        <input type="file" accept=".svg" data-arquivo>
+        <button type="button" class="btn-secundario" data-enviar>⬆ Enviar novo modelo</button>
+        <p class="modelo-mensagem" data-mensagem hidden></p>
+      </div>
+      <div class="modelo-item" data-modelo="sintese">
+        <h3 class="modelo-titulo">Modelo da síntese (1 página)</h3>
+        <p class="modelo-status" data-status>Carregando...</p>
+        <input type="file" accept=".svg" data-arquivo>
+        <button type="button" class="btn-secundario" data-enviar>⬆ Enviar novo modelo</button>
+        <p class="modelo-mensagem" data-mensagem hidden></p>
+      </div>
     </div>
   </div>
 
@@ -528,9 +557,121 @@
     carregarGrade();
   });
 
+  var MODELOS_LABEL = { relatorio: "Modelo do relatório completo", sintese: "Modelo da síntese (1 página)" };
+  var supabaseAnonKeyAtual = "";
+
+  function formatarBytes(n){
+    if (n === null || n === undefined) return "";
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1024 / 1024).toFixed(1) + " MB";
+  }
+
+  function formatarDataHora(iso){
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  async function carregarModelos(){
+    try{
+      var resp = await chamarApi("/api/modelos");
+      if (!resp.ok){
+        document.querySelectorAll("[data-status]").forEach(function(el){ el.textContent = "Erro ao consultar: " + (resp.erro || ""); });
+        return;
+      }
+      supabaseAnonKeyAtual = resp.supabaseAnonKey || "";
+      Object.keys(MODELOS_LABEL).forEach(function(chave){
+        var item = document.querySelector('.modelo-item[data-modelo="' + chave + '"]');
+        var status = item.querySelector("[data-status]");
+        var info = resp.modelos[chave];
+        status.textContent = info
+          ? "Atualizado em " + formatarDataHora(info.atualizadoEm) + " · " + formatarBytes(info.tamanhoBytes)
+          : "Nenhum modelo enviado ainda — usando o modelo padrão do repositório.";
+        if (!supabaseAnonKeyAtual){
+          var msg = item.querySelector("[data-mensagem]");
+          msg.hidden = false;
+          msg.className = "modelo-mensagem erro";
+          msg.textContent = "Configuração pendente: defina a variável SUPABASE_ANON_KEY nesta aplicação (Vercel) pra habilitar o envio direto pro Storage.";
+        }
+      });
+    } catch(e){
+      document.querySelectorAll("[data-status]").forEach(function(el){ el.textContent = "Erro de conexão."; });
+    }
+  }
+
+  async function comprimirGzip(arrayBuffer){
+    var cs = new CompressionStream("gzip");
+    var comprimido = new Blob([arrayBuffer]).stream().pipeThrough(cs);
+    return await new Response(comprimido).blob();
+  }
+
+  async function enviarModelo(chave, item){
+    var input = item.querySelector("[data-arquivo]");
+    var botao = item.querySelector("[data-enviar]");
+    var msg = item.querySelector("[data-mensagem]");
+    var arquivo = input.files[0];
+    if (!arquivo){
+      msg.hidden = false; msg.className = "modelo-mensagem erro"; msg.textContent = "Escolha um arquivo .svg primeiro.";
+      return;
+    }
+    botao.disabled = true;
+    msg.hidden = false; msg.className = "modelo-mensagem"; msg.textContent = "Preparando envio...";
+    try{
+      var respUrl = await chamarApi("/api/modelos/upload-url", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ modelo: chave }),
+      });
+      if (!respUrl.ok){
+        msg.className = "modelo-mensagem erro"; msg.textContent = respUrl.erro || "Erro ao preparar o envio.";
+        return;
+      }
+      var blobParaEnviar = arquivo;
+      if (chave === "relatorio"){
+        msg.textContent = "Compactando...";
+        if (typeof CompressionStream === "undefined"){
+          msg.className = "modelo-mensagem erro";
+          msg.textContent = "Este navegador não suporta compressão no envio (CompressionStream). Use uma versão recente do Chrome/Edge.";
+          return;
+        }
+        blobParaEnviar = await comprimirGzip(await arquivo.arrayBuffer());
+      }
+      msg.textContent = "Enviando (" + formatarBytes(blobParaEnviar.size) + ")...";
+      var fd = new FormData();
+      fd.append("file", blobParaEnviar, respUrl.caminho.split("/").pop());
+      var respPut = await fetch(respUrl.url, {
+        method: "PUT",
+        headers: supabaseAnonKeyAtual ? { "apikey": supabaseAnonKeyAtual } : {},
+        body: fd,
+      });
+      if (!respPut.ok){
+        var textoErro = await respPut.text().catch(function(){ return ""; });
+        throw new Error("HTTP " + respPut.status + (textoErro ? " — " + textoErro : ""));
+      }
+      msg.className = "modelo-mensagem sucesso";
+      msg.textContent = "Modelo enviado! O Gerador de Relatório passa a usá-lo em até 5 minutos.";
+      input.value = "";
+      await carregarModelos();
+    } catch(e){
+      msg.hidden = false;
+      msg.className = "modelo-mensagem erro";
+      msg.textContent = "Erro ao enviar: " + e.message;
+    } finally {
+      botao.disabled = false;
+    }
+  }
+
+  document.querySelectorAll(".modelo-item").forEach(function(item){
+    var chave = item.getAttribute("data-modelo");
+    item.querySelector("[data-enviar]").addEventListener("click", function(){ enviarModelo(chave, item); });
+  });
+
   window.iniciarGerenciadorDados = function(){
     montarAbas();
     carregarEdicoes();
+    carregarModelos();
   };
 })();
 </script>

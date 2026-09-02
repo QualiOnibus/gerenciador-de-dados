@@ -336,3 +336,57 @@ def gerar_zip_completo() -> bytes:
             for nome_tabela in TODAS_TABELAS:
                 zf.writestr(f"{pasta}/{nome_tabela}.csv", gerar_csv_tabela(nome_tabela, edicao["id"]))
     return buffer.getvalue()
+
+# --- Gerenciamento dos modelos (relatório/síntese) no Supabase Storage ---
+# Mesmo bucket e mesmos nomes de arquivo que o Gerador de Relatório lê
+# (`BUCKET_MODELOS`/`NOME_TEMPLATE_STORAGE`/`NOME_SINTESE_STORAGE` em
+# app_web/servidor.py de lá) - atualizar aqui é o que "publica" um modelo
+# novo pras próximas gerações de relatório/síntese, sem precisar mexer no
+# código. O modelo do relatório principal é comprimido em gzip no Storage
+# (arquivo grande, ~15MB descomprimido); a síntese fica sem compressão.
+BUCKET_MODELOS = "modelos-relatorio"
+MODELOS_STORAGE: dict[str, str] = {
+    "relatorio": "relatorio_versao_3_modelo.svg.gz",
+    "sintese": "sintese_modelo.svg",
+}
+
+
+def listar_info_modelos() -> dict[str, Optional[dict]]:
+    """Metadados (tamanho em bytes, data da última atualização) de cada
+    modelo hoje publicado no Storage - None pra um modelo que ainda não
+    foi publicado por aqui (o Gerador de Relatório então usa o modelo
+    embutido no próprio repositório dele, como reserva)."""
+    sb = _supabase_client()
+    arquivos = sb.storage.from_(BUCKET_MODELOS).list()
+    por_nome = {a.get("name"): a for a in arquivos}
+    info: dict[str, Optional[dict]] = {}
+    for chave, nome_arquivo in MODELOS_STORAGE.items():
+        arquivo = por_nome.get(nome_arquivo)
+        if arquivo is None:
+            info[chave] = None
+            continue
+        metadata = arquivo.get("metadata") or {}
+        info[chave] = {
+            "tamanhoBytes": metadata.get("size"),
+            "atualizadoEm": arquivo.get("updated_at"),
+        }
+    return info
+
+
+def gerar_url_upload_modelo(chave_modelo: str) -> dict:
+    """Cria uma signed upload URL pro modelo `chave_modelo` ("relatorio" ou
+    "sintese"): o navegador sobe o arquivo direto pro Supabase Storage com
+    essa URL, sem passar pelo corpo desta função serverless (limite de
+    4.5MB da Vercel, menor que o modelo do relatório comprimido). Com
+    upsert, então reenviar sobrescreve o modelo anterior no mesmo lugar -
+    é assim que o Gerador de Relatório sempre lê "o modelo atual"."""
+    if chave_modelo not in MODELOS_STORAGE:
+        raise ValueError("Modelo inválido.")
+    from storage3.types import CreateSignedUploadUrlOptions
+
+    nome_arquivo = MODELOS_STORAGE[chave_modelo]
+    sb = _supabase_client()
+    resultado = sb.storage.from_(BUCKET_MODELOS).create_signed_upload_url(
+        nome_arquivo, CreateSignedUploadUrlOptions(upsert="true")
+    )
+    return {"url": resultado["signed_url"], "caminho": nome_arquivo}

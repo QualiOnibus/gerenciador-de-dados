@@ -7,6 +7,7 @@ entrada em vez de um arquivo por rota)."""
 from __future__ import annotations
 
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
@@ -108,6 +109,8 @@ class Handler(BaseHTTPRequestHandler):
 
         if rota == "edicoes":
             self._rota_edicoes()
+        elif rota == "modelos":
+            self._rota_modelos()
         elif rota == "tabela":
             self._rota_tabela(query)
         elif rota == "tabela/valores":
@@ -142,6 +145,8 @@ class Handler(BaseHTTPRequestHandler):
 
         if rota == "tabela/linha":
             self._rota_atualizar_linha(corpo)
+        elif rota == "modelos/upload-url":
+            self._rota_modelos_upload_url(corpo)
         else:
             self.send_error(404, "Rota nao encontrada")
 
@@ -266,3 +271,26 @@ class Handler(BaseHTTPRequestHandler):
             self._enviar_json(200, {"ok": False, "erro": str(e)})
         except Exception as e:
             self._enviar_json(200, {"ok": False, "erro": f"Erro ao atualizar a linha: {e}"})
+
+    def _rota_modelos(self) -> None:
+        try:
+            info = dm.listar_info_modelos()
+            self._enviar_json(200, {
+                "ok": True,
+                "modelos": info,
+                "supabaseUrl": os.environ.get("SUPABASE_URL", ""),
+                "supabaseAnonKey": os.environ.get("SUPABASE_ANON_KEY", ""),
+            })
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao consultar os modelos: {e}"})
+
+    def _rota_modelos_upload_url(self, corpo: dict) -> None:
+        chave_modelo = (corpo.get("modelo") or "").strip()
+        try:
+            resultado = dm.gerar_url_upload_modelo(chave_modelo)
+            self._enviar_json(200, {"ok": True, **resultado})
+        except ValueError as e:
+            self._enviar_json(400, {"ok": False, "erro": str(e)})
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao preparar o envio: {e}"})
+
