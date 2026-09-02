@@ -157,6 +157,8 @@ class Handler(BaseHTTPRequestHandler):
             self._rota_atualizar_linha(corpo)
         elif rota == "modelos/upload-url":
             self._rota_modelos_upload_url(corpo)
+        elif rota == "edicoes/excluir":
+            self._rota_excluir_edicao(corpo)
         else:
             self.send_error(404, "Rota nao encontrada")
 
@@ -244,14 +246,18 @@ class Handler(BaseHTTPRequestHandler):
 
     def _rota_exportar_edicao(self, query: dict) -> None:
         edicao_id_bruto = (query.get("edicaoId", [""])[0] or "").strip()
+        tabelas_bruto = (query.get("tabelas", [""])[0] or "").strip()
+        tabelas = [t.strip() for t in tabelas_bruto.split(",") if t.strip()] if tabelas_bruto else None
         try:
             edicao_id = int(edicao_id_bruto)
         except ValueError:
             self._enviar_json(400, {"ok": False, "erro": "edicaoId invalido."})
             return
         try:
-            zip_bytes = dm.gerar_zip_edicao(edicao_id)
+            zip_bytes = dm.gerar_zip_edicao(edicao_id, tabelas)
             self._enviar_binario(zip_bytes, "application/zip", f"edicao_{edicao_id}.zip")
+        except ValueError as e:
+            self._enviar_json(400, {"ok": False, "erro": str(e)})
         except Exception as e:
             self._enviar_json(200, {"ok": False, "erro": f"Erro ao exportar a edição: {e}"})
 
@@ -340,4 +346,19 @@ class Handler(BaseHTTPRequestHandler):
             self._enviar_json(200, {"ok": False, "erro": str(e)})
         except Exception as e:
             self._enviar_json(200, {"ok": False, "erro": f"Erro ao importar o CSV: {e}"})
+
+    def _rota_excluir_edicao(self, corpo: dict) -> None:
+        edicao_id = corpo.get("edicaoId")
+        try:
+            edicao_id = int(edicao_id)
+        except (TypeError, ValueError):
+            self._enviar_json(400, {"ok": False, "erro": "edicaoId invalido."})
+            return
+        try:
+            apagadas = dm.excluir_edicao(edicao_id)
+            self._enviar_json(200, {"ok": True, "apagadas": apagadas})
+        except ValueError as e:
+            self._enviar_json(200, {"ok": False, "erro": str(e)})
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao apagar a edição: {e}"})
 

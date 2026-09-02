@@ -86,6 +86,21 @@
   .exportar-edicao .btn-secundario{text-decoration:none;}
   .exportar-rotulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--texto-fraco);}
 
+  #busca-edicao{margin-bottom:8px;}
+  #tabela-edicoes-wrap{border:1px solid var(--borda);border-radius:10px;max-height:280px;overflow-y:auto;}
+  table.edicoes{width:100%;border-collapse:collapse;font-size:13px;}
+  table.edicoes thead tr{position:sticky;top:0;background:var(--fundo);}
+  table.edicoes th{text-align:left;padding:8px 10px;font-size:11.2px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--texto-fraco);border-bottom:1px solid var(--borda);}
+  table.edicoes td{padding:8px 10px;border-top:1px solid var(--borda);color:var(--texto);}
+  table.edicoes tbody tr[data-id]{cursor:pointer;}
+  table.edicoes tbody tr[data-id]:hover{background:var(--fundo);}
+  table.edicoes tbody tr.linha-selecionada{background:var(--accent-soft);}
+  table.edicoes tbody tr.linha-selecionada td:first-child{color:var(--accent);font-weight:700;}
+  .acoes-linha{display:flex;gap:6px;justify-content:flex-end;}
+  .btn-icone-linha{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:7px;border:1px solid var(--borda);background:var(--branco);color:var(--texto-suave);font-size:12px;cursor:pointer;white-space:nowrap;}
+  .btn-icone-linha:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-icone-linha.perigo:hover{border-color:var(--erro-borda);color:var(--erro);}
+
   .dados-cabecalho{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
   .dados-cabecalho .cartao-titulo,.dados-cabecalho .cartao-descricao{margin:0;}
   .dados-cabecalho .cartao-descricao{margin-top:4px;}
@@ -128,10 +143,6 @@
   .rotulo-arquivo:hover{border-color:var(--accent);color:var(--accent);}
   .nome-arquivo-selecionado{font-size:12px;color:var(--texto-fraco);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-  .pilula{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10.6px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;flex-shrink:0;}
-  .pilula.publicado{background:var(--sucesso-bg);color:var(--sucesso);border:1px solid var(--sucesso-borda);}
-  .pilula.pendente{background:var(--aviso-bg);color:var(--aviso);border:1px solid var(--aviso-borda);}
-
   .grade-modelos{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   @media (max-width:640px){.grade-modelos{grid-template-columns:1fr;}}
   .modelo-card{display:flex;flex-direction:column;gap:14px;padding:18px 20px;border:1px solid var(--borda);border-radius:14px;background:var(--fundo);}
@@ -140,8 +151,8 @@
   .modelo-info{flex:1;min-width:0;}
   .modelo-titulo{margin:0 0 3px;font-size:13.8px;font-weight:700;color:var(--texto);}
   .modelo-meta{margin:0;font-size:12px;color:var(--texto-suave);}
-  .modelo-acoes{display:flex;flex-wrap:wrap;gap:8px;}
-  .modelo-upload{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:13px;border-top:1px dashed var(--borda);}
+  .modelo-botoes{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .modelo-botoes .btn-secundario,.modelo-botoes .btn-primario{justify-content:center;width:100%;}
   .modelo-mensagem{margin:0;font-size:12.3px;}
   .modelo-mensagem.erro{color:var(--erro);}
   .modelo-mensagem.sucesso{color:var(--sucesso);}
@@ -152,10 +163,6 @@
   table.grade td{padding:8px 12px;border-bottom:1px solid var(--borda);color:var(--texto);max-width:260px;overflow:hidden;text-overflow:ellipsis;}
   table.grade tbody tr:last-child td{border-bottom:none;}
   table.grade tbody tr:hover{background:var(--fundo);}
-  td.editavel{cursor:text;}
-  td.editavel:hover{background:var(--accent-soft);}
-  td.editando{padding:4px 6px;}
-  td.editando input{width:100%;padding:5px 7px;border:1px solid var(--accent);border-radius:5px;font-size:12.6px;font-family:inherit;}
 
   .paginacao{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;font-size:12.6px;color:var(--texto-suave);}
   .paginacao-botoes{display:flex;gap:8px;}
@@ -183,6 +190,23 @@
   .login-card button:hover{opacity:.88;}
   .login-card button:disabled{opacity:.6;cursor:default;}
   .login-erro{color:var(--erro);font-size:12.5px;margin:10px 0 0;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(20,22,28,.42);display:flex;align-items:center;justify-content:center;z-index:9000;padding:20px;}
+  .modal-overlay[hidden]{display:none;}
+  .modal-caixa{background:var(--branco);border-radius:16px;padding:26px 26px 22px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.18);max-height:88vh;overflow-y:auto;}
+  .modal-titulo{margin:0 0 8px;font-size:15.5px;font-weight:700;color:var(--texto);}
+  .modal-descricao{margin:0 0 14px;font-size:12.8px;color:var(--texto-suave);line-height:1.55;}
+  .modal-nome-confirmacao{margin:0 0 10px;padding:9px 12px;background:var(--fundo);border-radius:8px;font-size:13px;font-weight:700;color:var(--texto);border:1px solid var(--borda);}
+  .modal-lista-tabelas{display:flex;flex-direction:column;gap:2px;border:1px solid var(--borda);border-radius:10px;padding:6px;margin-bottom:10px;max-height:220px;overflow-y:auto;}
+  .modal-item-tabela{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;font-size:13px;color:var(--texto);cursor:pointer;}
+  .modal-item-tabela:hover{background:var(--fundo);}
+  .modal-item-tabela input{margin:0;}
+  .modal-acoes-topo{display:flex;gap:14px;margin-bottom:14px;}
+  .btn-link{background:none;border:none;padding:0;color:var(--accent);font-size:12.3px;font-weight:600;cursor:pointer;text-decoration:underline;}
+  .modal-rodape{display:flex;justify-content:flex-end;gap:10px;margin-top:4px;}
+  .btn-perigo{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid var(--erro);background:var(--erro);color:#fff;font-size:12.6px;font-weight:600;cursor:pointer;transition:opacity .12s;}
+  .btn-perigo:hover:not(:disabled){opacity:.88;}
+  .btn-perigo:disabled{opacity:.45;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -282,18 +306,11 @@
             <h3 class="modelo-titulo">Relatório</h3>
             <p class="modelo-meta" data-status>Carregando...</p>
           </div>
-          <span class="pilula" data-pilula hidden></span>
         </div>
-        <div class="modelo-acoes">
-          <button type="button" class="btn-secundario" data-baixar disabled>⬇ Baixar modelo atual</button>
-        </div>
-        <div class="modelo-upload">
-          <label class="rotulo-arquivo">
-            📁 Escolher arquivo
-            <input type="file" accept=".svg" data-arquivo hidden>
-          </label>
-          <span class="nome-arquivo-selecionado" data-nome-arquivo>Nenhum arquivo selecionado</span>
-          <button type="button" class="btn-primario" data-enviar>⬆ Enviar novo modelo</button>
+        <div class="modelo-botoes">
+          <button type="button" class="btn-secundario" data-baixar disabled>⬇ Baixar modelo</button>
+          <button type="button" class="btn-primario" data-atualizar>⬆ Atualizar modelo</button>
+          <input type="file" accept=".svg" data-arquivo hidden>
         </div>
         <p class="modelo-mensagem" data-mensagem hidden></p>
       </div>
@@ -304,18 +321,11 @@
             <h3 class="modelo-titulo">Síntese</h3>
             <p class="modelo-meta" data-status>Carregando...</p>
           </div>
-          <span class="pilula" data-pilula hidden></span>
         </div>
-        <div class="modelo-acoes">
-          <button type="button" class="btn-secundario" data-baixar disabled>⬇ Baixar modelo atual</button>
-        </div>
-        <div class="modelo-upload">
-          <label class="rotulo-arquivo">
-            📁 Escolher arquivo
-            <input type="file" accept=".svg" data-arquivo hidden>
-          </label>
-          <span class="nome-arquivo-selecionado" data-nome-arquivo>Nenhum arquivo selecionado</span>
-          <button type="button" class="btn-primario" data-enviar>⬆ Enviar novo modelo</button>
+        <div class="modelo-botoes">
+          <button type="button" class="btn-secundario" data-baixar disabled>⬇ Baixar modelo</button>
+          <button type="button" class="btn-primario" data-atualizar>⬆ Atualizar modelo</button>
+          <input type="file" accept=".svg" data-arquivo hidden>
         </div>
         <p class="modelo-mensagem" data-mensagem hidden></p>
       </div>
@@ -326,18 +336,29 @@
     <div class="dados-cabecalho">
       <div>
         <h2 class="cartao-titulo">Dados</h2>
-        <p class="cartao-descricao">Escolha a edição e a tabela pra consultar ou editar os dados. Tabelas com 🔒 são somente leitura (registros de auditoria).</p>
+        <p class="cartao-descricao">Escolha uma edição na tabela abaixo pra consultar os dados (somente visualização). Use os botões da linha pra baixar os dados ou apagar a edição. Atualizações são feitas exclusivamente via upload de CSV, na subseção abaixo.</p>
       </div>
     </div>
     <div class="campo">
-      <label class="rotulo" for="select-edicao">Edição</label>
-      <select id="select-edicao">
-        <option value="">Carregando edições...</option>
-      </select>
+      <label class="rotulo" for="busca-edicao">Edição</label>
+      <input type="text" id="busca-edicao" placeholder="Pesquisar por edição, sistema, ano...">
+      <div id="tabela-edicoes-wrap">
+        <table class="edicoes" id="tabela-edicoes">
+          <thead>
+            <tr>
+              <th>Edição</th>
+              <th>Sistema</th>
+              <th>Ano</th>
+              <th>Semestre</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela-edicoes"><tr><td colspan="5" style="padding:12px 10px;color:var(--texto-fraco);">Carregando edições…</td></tr></tbody>
+        </table>
+      </div>
     </div>
     <div class="exportar-edicao">
       <span class="exportar-rotulo">Exportar</span>
-      <a id="link-baixar-edicao" class="btn-secundario" hidden>⬇ Esta edição (.zip)</a>
       <a id="link-baixar-completo" class="btn-secundario" href="/api/exportar/completo">⬇ Base de dados completa (.zip)</a>
     </div>
 
@@ -350,7 +371,7 @@
 
       <div class="secao-csv">
         <h3 class="secao-csv-titulo">⇅ Atualizar dados em lote via CSV</h3>
-        <p class="secao-csv-descricao">Clique numa célula da grade acima pra editar um valor direto aqui, ou baixe o CSV desta consulta (com os filtros aplicados), edite no Excel/Planilhas e envie de volta - as linhas são identificadas pelo "id" da própria planilha.</p>
+        <p class="secao-csv-descricao">A grade acima é só para consulta - toda edição de dados é feita por aqui: baixe o CSV desta consulta (com os filtros aplicados), edite no Excel/Planilhas e envie de volta. As linhas são identificadas pelo "id" da própria planilha; nenhuma linha nova é criada, só linhas existentes são atualizadas.</p>
         <div class="secao-csv-passos">
           <div class="passo-csv">
             <span class="passo-numero">1</span>
@@ -379,6 +400,38 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-baixar-dados" hidden>
+    <div class="modal-caixa">
+      <h3 class="modal-titulo">Baixar dados da edição</h3>
+      <p class="modal-descricao" id="modal-baixar-edicao-nome"></p>
+      <div class="modal-lista-tabelas" id="lista-tabelas-download"></div>
+      <div class="modal-acoes-topo">
+        <button type="button" class="btn-link" id="btn-selecionar-todas">Selecionar todas</button>
+        <button type="button" class="btn-link" id="btn-selecionar-nenhuma">Limpar seleção</button>
+      </div>
+      <div class="modal-rodape">
+        <button type="button" class="btn-secundario" data-fechar-modal>Cancelar</button>
+        <button type="button" class="btn-primario" id="btn-confirmar-download">⬇ Baixar .zip</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-apagar-edicao" hidden>
+    <div class="modal-caixa">
+      <h3 class="modal-titulo">Apagar edição</h3>
+      <p class="modal-descricao">Esta ação é <strong>irreversível</strong>: apaga permanentemente os dados desta edição em todas as tabelas. Pra confirmar, digite o nome exato da edição abaixo.</p>
+      <p class="modal-nome-confirmacao" id="apagar-nome-confirmacao"></p>
+      <div class="campo">
+        <input type="text" id="apagar-confirmacao-input" placeholder="Digite o nome da edição">
+      </div>
+      <p class="importar-mensagem erro" id="apagar-mensagem" hidden></p>
+      <div class="modal-rodape">
+        <button type="button" class="btn-secundario" data-fechar-modal>Cancelar</button>
+        <button type="button" class="btn-perigo" id="btn-confirmar-apagar" disabled>🗑 Apagar definitivamente</button>
+      </div>
+    </div>
+  </div>
+
 </main>
 </div>
 
@@ -396,17 +449,30 @@
     processing_log: "Log de processamento",
   };
 
-  var selectEdicao = document.getElementById("select-edicao");
   var areaTabelas = document.getElementById("area-tabelas");
   var abasTabela = document.getElementById("abas-tabela");
   var areaGrade = document.getElementById("area-grade");
   var linhaFiltros = document.getElementById("linha-filtros");
-  var linkBaixarEdicao = document.getElementById("link-baixar-edicao");
   var passoImportar = document.getElementById("passo-importar");
   var inputImportarCsv = document.getElementById("input-importar-csv");
   var nomeCsvSelecionado = document.getElementById("nome-csv-selecionado");
   var btnImportarCsv = document.getElementById("btn-importar-csv");
   var importarMensagem = document.getElementById("importar-mensagem");
+
+  var buscaEdicao = document.getElementById("busca-edicao");
+  var corpoTabelaEdicoes = document.getElementById("corpo-tabela-edicoes");
+
+  var modalBaixarDados = document.getElementById("modal-baixar-dados");
+  var listaTabelasDownload = document.getElementById("lista-tabelas-download");
+  var modalApagarEdicao = document.getElementById("modal-apagar-edicao");
+  var apagarNomeConfirmacao = document.getElementById("apagar-nome-confirmacao");
+  var apagarConfirmacaoInput = document.getElementById("apagar-confirmacao-input");
+  var apagarMensagem = document.getElementById("apagar-mensagem");
+  var btnConfirmarApagar = document.getElementById("btn-confirmar-apagar");
+
+  var TODAS_TABELAS = TABELAS_EDITAVEIS.concat(TABELAS_SOMENTE_LEITURA);
+  var edicoesCarregadas = [];
+  var edicaoParaAcao = null;
 
   var estado = { edicaoId: null, tabela: null, pagina: 0, filtros: {} };
   var filtrosChaveAtual = null;
@@ -433,24 +499,82 @@
     return json;
   }
 
+  function rotuloEdicao(e){
+    return e ? (e.sistema + " " + e.ano + "/" + e.semestre) : "";
+  }
+
+  function renderizarTabelaEdicoes(filtro){
+    var termo = (filtro || "").trim().toLowerCase();
+    var linhas = edicoesCarregadas.filter(function(e){
+      return !termo || (e.id + " " + e.sistema + " " + e.ano + " " + e.semestre).toLowerCase().indexOf(termo) !== -1;
+    });
+    if (!linhas.length){
+      corpoTabelaEdicoes.innerHTML = '<tr><td colspan="5" style="padding:12px 10px;color:var(--texto-fraco);">Nenhuma edição encontrada.</td></tr>';
+      return;
+    }
+    corpoTabelaEdicoes.innerHTML = linhas.map(function(e){
+      return '<tr data-id="' + e.id + '">' +
+        '<td>' + e.id + '</td>' +
+        '<td>' + escapeHtml(e.sistema) + '</td>' +
+        '<td>' + escapeHtml(String(e.ano)) + '</td>' +
+        '<td>' + escapeHtml(String(e.semestre)) + '</td>' +
+        '<td><div class="acoes-linha">' +
+          '<button type="button" class="btn-icone-linha" data-acao="baixar" data-id="' + e.id + '">⬇ Baixar dados</button>' +
+          '<button type="button" class="btn-icone-linha perigo" data-acao="apagar" data-id="' + e.id + '">🗑 Apagar</button>' +
+        '</div></td>' +
+      '</tr>';
+    }).join("");
+    corpoTabelaEdicoes.querySelectorAll("tr[data-id]").forEach(function(tr){
+      tr.classList.toggle("linha-selecionada", estado.edicaoId === tr.dataset.id);
+    });
+    corpoTabelaEdicoes.querySelectorAll('button[data-acao="baixar"]').forEach(function(botao){
+      botao.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        abrirModalDownload(botao.dataset.id);
+      });
+    });
+    corpoTabelaEdicoes.querySelectorAll('button[data-acao="apagar"]').forEach(function(botao){
+      botao.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        abrirModalApagar(botao.dataset.id);
+      });
+    });
+    corpoTabelaEdicoes.querySelectorAll("tr[data-id]").forEach(function(tr){
+      tr.addEventListener("click", function(){ selecionarEdicaoNaTabela(tr.dataset.id); });
+    });
+  }
+
+  function selecionarEdicaoNaTabela(id){
+    estado.edicaoId = id;
+    estado.pagina = 0;
+    estado.filtros = {};
+    corpoTabelaEdicoes.querySelectorAll("tr[data-id]").forEach(function(tr){
+      tr.classList.toggle("linha-selecionada", tr.dataset.id === id);
+    });
+    areaTabelas.hidden = false;
+    if (!estado.tabela) estado.tabela = TABELAS_EDITAVEIS[0];
+    atualizarAbaAtiva();
+    atualizarBarraImportacao();
+    carregarGrade();
+  }
+
   async function carregarEdicoes(){
     try{
       var resp = await chamarApi("/api/edicoes");
-      if (!resp.ok){
-        selectEdicao.innerHTML = '<option value="">Erro ao carregar edições</option>';
+      if (!resp.ok || !resp.edicoes.length){
+        corpoTabelaEdicoes.innerHTML = '<tr><td colspan="5" style="padding:12px 10px;color:var(--texto-fraco);">' + escapeHtml(resp.ok ? "Nenhuma edição encontrada." : (resp.erro || "Erro ao carregar edições.")) + '</td></tr>';
         return;
       }
-      if (!resp.edicoes.length){
-        selectEdicao.innerHTML = '<option value="">Nenhuma edição encontrada</option>';
-        return;
-      }
-      selectEdicao.innerHTML = '<option value="">Selecione...</option>' + resp.edicoes.map(function(e){
-        return '<option value="' + e.id + '">' + escapeHtml(e.sistema) + ' ' + e.ano + '/' + e.semestre + '</option>';
-      }).join("");
+      edicoesCarregadas = resp.edicoes;
+      renderizarTabelaEdicoes("");
     } catch(e){
-      selectEdicao.innerHTML = '<option value="">Erro ao carregar edições</option>';
+      corpoTabelaEdicoes.innerHTML = '<tr><td colspan="5" style="padding:12px 10px;color:var(--erro);">Erro de conexão ao carregar edições.</td></tr>';
     }
   }
+
+  buscaEdicao.addEventListener("input", function(){
+    renderizarTabelaEdicoes(buscaEdicao.value);
+  });
 
   function montarAbas(){
     var html = "";
@@ -559,7 +683,6 @@
   }
 
   function renderizarGrade(resp){
-    var colunasEditaveis = resp.colunasEditaveis || [];
     if (!resp.linhas.length){
       areaGrade.innerHTML = '<p class="caixa info">Nenhum registro encontrado para esta edição.</p>';
       return;
@@ -571,8 +694,7 @@
     resp.linhas.forEach(function(linha){
       html += '<tr data-id="' + linha.id + '">';
       colunas.forEach(function(c){
-        var editavel = colunasEditaveis.indexOf(c) !== -1;
-        html += '<td' + (editavel ? ' class="editavel" data-coluna="' + c + '"' : '') + '>' + escapeHtml(formatarCelula(linha[c])) + '</td>';
+        html += "<td>" + escapeHtml(formatarCelula(linha[c])) + "</td>";
       });
       html += "</tr>";
     });
@@ -593,86 +715,106 @@
     if (btnAnterior) btnAnterior.addEventListener("click", function(){ estado.pagina--; carregarGrade(); });
     if (btnProxima) btnProxima.addEventListener("click", function(){ estado.pagina++; carregarGrade(); });
 
-    areaGrade.querySelectorAll("td.editavel").forEach(function(celula){
-      celula.addEventListener("click", function(){ iniciarEdicaoCelula(celula); });
-    });
   }
 
-  function iniciarEdicaoCelula(celula){
-    if (celula.classList.contains("editando")) return;
-    var valorAtual = celula.textContent;
-    celula.classList.add("editando");
-    celula.innerHTML = '<input type="text">';
-    var input = celula.querySelector("input");
-    input.value = valorAtual;
-    input.focus();
-    input.select();
-
-    function confirmar(){
-      var novoValor = input.value;
-      celula.classList.remove("editando");
-      if (novoValor === valorAtual){
-        celula.textContent = valorAtual;
-        return;
-      }
-      salvarCelula(celula, novoValor, valorAtual);
-    }
-    function cancelar(){
-      celula.classList.remove("editando");
-      celula.textContent = valorAtual;
-    }
-
-    input.addEventListener("keydown", function(ev){
-      if (ev.key === "Enter"){ confirmar(); }
-      else if (ev.key === "Escape"){ cancelar(); }
-    });
-    input.addEventListener("blur", confirmar);
+  function dispararDownload(url){
+    var a = document.createElement("a");
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
-  async function salvarCelula(celula, novoValor, valorAnterior){
-    celula.textContent = novoValor;
-    celula.style.opacity = "0.5";
-    var linha = celula.closest("tr");
-    var linhaId = linha.getAttribute("data-id");
-    var coluna = celula.getAttribute("data-coluna");
-    var valores = {};
-    valores[coluna] = novoValor;
-    try{
-      var resp = await chamarApi("/api/tabela/linha", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ tabela: estado.tabela, id: linhaId, valores: valores }),
-      });
-      celula.style.opacity = "1";
-      if (!resp.ok){
-        alert("Não foi possível salvar: " + (resp.erro || "erro desconhecido") + "\n\nO valor voltou ao original.");
-        celula.textContent = valorAnterior;
-        return;
-      }
-      celula.textContent = formatarCelula(resp.linha[coluna]);
-    } catch(e){
-      celula.style.opacity = "1";
-      celula.textContent = valorAnterior;
-      alert("Erro de conexão ao salvar. O valor voltou ao original.");
-    }
+  function fecharModais(){
+    modalBaixarDados.hidden = true;
+    modalApagarEdicao.hidden = true;
+    edicaoParaAcao = null;
   }
 
-  selectEdicao.addEventListener("change", function(){
-    estado.edicaoId = selectEdicao.value || null;
-    estado.pagina = 0;
-    estado.filtros = {};
-    if (!estado.edicaoId){
-      areaTabelas.hidden = true;
-      linkBaixarEdicao.hidden = true;
+  function abrirModalDownload(id){
+    edicaoParaAcao = edicoesCarregadas.find(function(e){ return String(e.id) === String(id); }) || null;
+    if (!edicaoParaAcao) return;
+    document.getElementById("modal-baixar-edicao-nome").textContent = "Escolha as tabelas que quer incluir no .zip da edição " + rotuloEdicao(edicaoParaAcao) + ".";
+    listaTabelasDownload.innerHTML = TODAS_TABELAS.map(function(t){
+      return '<label class="modal-item-tabela"><input type="checkbox" value="' + t + '" checked> ' + escapeHtml(RETULOS_TABELA[t] || t) + (TABELAS_SOMENTE_LEITURA.indexOf(t) !== -1 ? " 🔒" : "") + '</label>';
+    }).join("");
+    modalBaixarDados.hidden = false;
+  }
+
+  document.getElementById("btn-selecionar-todas").addEventListener("click", function(){
+    listaTabelasDownload.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.checked = true; });
+  });
+  document.getElementById("btn-selecionar-nenhuma").addEventListener("click", function(){
+    listaTabelasDownload.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.checked = false; });
+  });
+
+  document.getElementById("btn-confirmar-download").addEventListener("click", function(){
+    if (!edicaoParaAcao) return;
+    var marcadas = Array.prototype.slice.call(listaTabelasDownload.querySelectorAll('input[type="checkbox"]:checked')).map(function(cb){ return cb.value; });
+    if (!marcadas.length){
+      alert("Escolha pelo menos uma tabela.");
       return;
     }
-    areaTabelas.hidden = false;
-    linkBaixarEdicao.hidden = false;
-    linkBaixarEdicao.href = "/api/exportar/edicao?edicaoId=" + encodeURIComponent(estado.edicaoId);
-    if (!estado.tabela) estado.tabela = TABELAS_EDITAVEIS[0];
-    atualizarAbaAtiva();
-    atualizarBarraImportacao();
-    carregarGrade();
+    var params = new URLSearchParams();
+    params.set("edicaoId", edicaoParaAcao.id);
+    params.set("tabelas", marcadas.join(","));
+    dispararDownload("/api/exportar/edicao?" + params.toString());
+    fecharModais();
+  });
+
+  function abrirModalApagar(id){
+    edicaoParaAcao = edicoesCarregadas.find(function(e){ return String(e.id) === String(id); }) || null;
+    if (!edicaoParaAcao) return;
+    apagarNomeConfirmacao.textContent = rotuloEdicao(edicaoParaAcao);
+    apagarConfirmacaoInput.value = "";
+    apagarMensagem.hidden = true;
+    btnConfirmarApagar.disabled = true;
+    modalApagarEdicao.hidden = false;
+    apagarConfirmacaoInput.focus();
+  }
+
+  apagarConfirmacaoInput.addEventListener("input", function(){
+    btnConfirmarApagar.disabled = !edicaoParaAcao || apagarConfirmacaoInput.value.trim() !== rotuloEdicao(edicaoParaAcao);
+  });
+
+  btnConfirmarApagar.addEventListener("click", async function(){
+    if (!edicaoParaAcao || apagarConfirmacaoInput.value.trim() !== rotuloEdicao(edicaoParaAcao)) return;
+    var idApagar = edicaoParaAcao.id;
+    btnConfirmarApagar.disabled = true;
+    apagarMensagem.hidden = true;
+    try{
+      var resp = await chamarApi("/api/edicoes/excluir", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ edicaoId: idApagar }),
+      });
+      if (!resp.ok){
+        apagarMensagem.hidden = false;
+        apagarMensagem.textContent = resp.erro || "Erro ao apagar a edição.";
+        btnConfirmarApagar.disabled = false;
+        return;
+      }
+      edicoesCarregadas = edicoesCarregadas.filter(function(e){ return String(e.id) !== String(idApagar); });
+      renderizarTabelaEdicoes(buscaEdicao.value);
+      if (String(estado.edicaoId) === String(idApagar)){
+        estado.edicaoId = null;
+        areaTabelas.hidden = true;
+      }
+      fecharModais();
+    } catch(e){
+      apagarMensagem.hidden = false;
+      apagarMensagem.textContent = "Erro de conexão ao apagar a edição.";
+      btnConfirmarApagar.disabled = false;
+    }
+  });
+
+  document.querySelectorAll("[data-fechar-modal]").forEach(function(botao){
+    botao.addEventListener("click", fecharModais);
+  });
+  [modalBaixarDados, modalApagarEdicao].forEach(function(overlay){
+    overlay.addEventListener("click", function(ev){
+      if (ev.target === overlay) fecharModais();
+    });
   });
 
   inputImportarCsv.addEventListener("change", function(){
@@ -753,20 +895,14 @@
       MODELOS_CHAVES.forEach(function(chave){
         var item = document.querySelector('.modelo-card[data-modelo="' + chave + '"]');
         var status = item.querySelector("[data-status]");
-        var pilula = item.querySelector("[data-pilula]");
         var botaoBaixar = item.querySelector("[data-baixar]");
         var info = resp.modelos[chave];
         modelosPublicados[chave] = !!info;
         botaoBaixar.disabled = !info;
-        pilula.hidden = false;
         if (info){
           status.textContent = "Atualizado em " + formatarDataHora(info.atualizadoEm) + " · " + formatarBytes(info.tamanhoBytes);
-          pilula.className = "pilula publicado";
-          pilula.textContent = "Publicado";
         } else {
           status.textContent = "Usando o modelo padrão do repositório (nenhum enviado por aqui ainda).";
-          pilula.className = "pilula pendente";
-          pilula.textContent = "Não publicado";
         }
         if (!supabaseAnonKeyAtual){
           var msg = item.querySelector("[data-mensagem]");
@@ -834,7 +970,7 @@
 
   async function enviarModelo(chave, item){
     var input = item.querySelector("[data-arquivo]");
-    var botao = item.querySelector("[data-enviar]");
+    var botao = item.querySelector("[data-atualizar]");
     var msg = item.querySelector("[data-mensagem]");
     var arquivo = input.files[0];
     if (!arquivo){
@@ -880,8 +1016,6 @@
       msg.className = "modelo-mensagem sucesso";
       msg.textContent = "Modelo enviado! O Gerador de Relatório passa a usá-lo em até 5 minutos.";
       input.value = "";
-      var nomeArquivo = item.querySelector("[data-nome-arquivo]");
-      if (nomeArquivo) nomeArquivo.textContent = "Nenhum arquivo selecionado";
       await carregarModelos();
     } catch(e){
       msg.hidden = false;
@@ -895,11 +1029,10 @@
   document.querySelectorAll(".modelo-card").forEach(function(item){
     var chave = item.getAttribute("data-modelo");
     var inputArquivo = item.querySelector("[data-arquivo]");
-    var nomeArquivo = item.querySelector("[data-nome-arquivo]");
+    item.querySelector("[data-atualizar]").addEventListener("click", function(){ inputArquivo.click(); });
     inputArquivo.addEventListener("change", function(){
-      nomeArquivo.textContent = inputArquivo.files[0] ? inputArquivo.files[0].name : "Nenhum arquivo selecionado";
+      if (inputArquivo.files[0]) enviarModelo(chave, item);
     });
-    item.querySelector("[data-enviar]").addEventListener("click", function(){ enviarModelo(chave, item); });
     item.querySelector("[data-baixar]").addEventListener("click", function(){ baixarModelo(chave, item); });
   });
 

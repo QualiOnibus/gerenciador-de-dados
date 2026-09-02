@@ -311,12 +311,17 @@ def gerar_csv_tabela(nome_tabela: str, edicao_id: int, filtros: Optional[dict[st
     return buffer.getvalue().encode("utf-8-sig")
 
 
-def gerar_zip_edicao(edicao_id: int) -> bytes:
-    """Um .zip com um .csv por tabela (as 7), todas as linhas dessa
-    edição - "baixar tudo desta edição", sem filtro nenhum."""
+def gerar_zip_edicao(edicao_id: int, tabelas: Optional[list[str]] = None) -> bytes:
+    """Um .zip com um .csv por tabela dessa edição, sem filtro nenhum -
+    "baixar dados desta edição". `tabelas=None` inclui todas (as 7);
+    passar uma lista restringe ao que o usuário escolheu no modal de
+    download (linhas inválidas são ignoradas silenciosamente)."""
+    tabelas_validas = [t for t in (tabelas if tabelas is not None else TODAS_TABELAS) if t in TODAS_TABELAS]
+    if not tabelas_validas:
+        raise ValueError("Nenhuma tabela válida selecionada.")
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for nome_tabela in TODAS_TABELAS:
+        for nome_tabela in tabelas_validas:
             zf.writestr(f"{nome_tabela}.csv", gerar_csv_tabela(nome_tabela, edicao_id))
     return buffer.getvalue()
 
@@ -523,3 +528,25 @@ def importar_csv_tabela(nome_tabela: str, edicao_id: int, conteudo_csv: bytes) -
         "avisos": avisos,
         "erros": erros_lote,
     }
+
+
+def excluir_edicao(edicao_id: int) -> dict:
+    """Apaga a edição e TODAS as linhas associadas nas outras 6 tabelas
+    (por "edicao_id"), e por fim a própria linha em "edicoes" - ação
+    IRREVERSÍVEL. A interface exige que o usuário digite o nome da edição
+    pra confirmar antes de chamar isso; não há uma segunda confirmação
+    aqui, então esta função apaga assim que chamada.
+
+    Apaga primeiro as tabelas relacionadas e só por último "edicoes" (nunca
+    o contrário), pra nunca deixar linhas orfãs se algo falhar no meio."""
+    sb = _supabase_client()
+    tabelas_relacionadas = [t for t in TODAS_TABELAS if t != "edicoes"]
+    apagadas: dict[str, int] = {}
+    for tabela in tabelas_relacionadas:
+        resp = sb.table(tabela).delete().eq("edicao_id", edicao_id).execute()
+        apagadas[tabela] = len(resp.data or [])
+    resp_edicao = sb.table("edicoes").delete().eq("id", edicao_id).execute()
+    if not resp_edicao.data:
+        raise ValueError("Edição não encontrada (id pode já ter sido removida).")
+    apagadas["edicoes"] = len(resp_edicao.data)
+    return apagadas
