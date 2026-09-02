@@ -30,11 +30,11 @@ def _supabase_client() -> Client:
 # exportar/importar planilha); as 2 ultimas sao so' leitura (auditoria) -
 # decisão confirmada com o usuário na definição do escopo desta ferramenta.
 TABELAS_EDITAVEIS = [
-    "edicoes",
-    "erro_amostral",
     "respostas_padrao",
     "respostas_especifico",
     "respostas_brutas",
+    "erro_amostral",
+    "edicoes",
 ]
 TABELAS_SOMENTE_LEITURA = ["remapeamentos", "processing_log"]
 TODAS_TABELAS = TABELAS_EDITAVEIS + TABELAS_SOMENTE_LEITURA
@@ -141,6 +141,35 @@ def _coluna_filtro(nome_tabela: str) -> str:
     return _COLUNAS_FILTRO_ESPECIAIS.get(nome_tabela, _COLUNA_FILTRO_PADRAO)
 
 
+def _colunas_respostas_dinamicas(edicao_id: int) -> list[str]:
+    """`respostas_brutas.respostas` e' um jsonb {pergunta: resposta} - em
+    vez de mostrar/baixar isso como uma unica celula com um blob JSON
+    (ilegivel e dificil de editar no Excel), a grade e o CSV usam uma
+    coluna por pergunta. Essas colunas sao as chaves que aparecem em pelo
+    menos uma linha desta edicao, em ordem alfabetica (estavel entre
+    exportacoes) - varre a edicao inteira (nao so' a pagina/filtro atual)
+    pra nunca "esquecer" uma coluna rara e perder dado numa reimportacao."""
+    sb = _supabase_client()
+    colunas: set[str] = set()
+    pagina = 0
+    while True:
+        inicio = pagina * TAMANHO_LOTE_EXPORTACAO
+        resp = (
+            sb.table("respostas_brutas")
+            .select("respostas")
+            .eq("edicao_id", edicao_id)
+            .range(inicio, inicio + TAMANHO_LOTE_EXPORTACAO - 1)
+            .execute()
+        )
+        linhas = resp.data or []
+        for linha in linhas:
+            colunas.update((linha.get("respostas") or {}).keys())
+        if len(linhas) < TAMANHO_LOTE_EXPORTACAO:
+            break
+        pagina += 1
+    return sorted(colunas)
+
+
 def _aplicar_filtros(query, nome_tabela: str, filtros: Optional[dict[str, str]]):
     """Acrescenta um .eq() por filtro valido em `filtros` - ignora
     silenciosamente qualquer coluna que nao esteja em
@@ -187,12 +216,22 @@ def ler_pagina_tabela(
     query = sb.table(nome_tabela).select("*").eq(coluna, edicao_id)
     query = _aplicar_filtros(query, nome_tabela, filtros)
     resp = query.order("id").range(inicio, fim).execute()
+    linhas = resp.data or []
+    if nome_tabela == "respostas_brutas":
+        colunas_perguntas = _colunas_respostas_dinamicas(edicao_id)
+        for linha in linhas:
+            respostas = linha.pop("respostas", None) or {}
+            for c in colunas_perguntas:
+                linha[c] = respostas.get(c)
+        colunas_tabela = ["subpopulacao"] + colunas_perguntas
+    else:
+        colunas_tabela = COLUNAS_POR_TABELA.get(nome_tabela, [])
     return {
-        "linhas": resp.data or [],
+        "linhas": linhas,
         "total": total,
         "pagina": pagina,
         "tamanhoPagina": tamanho_pagina,
-        "colunas": COLUNAS_POR_TABELA.get(nome_tabela, []),
+        "colunas": colunas_tabela,
         "colunasEditaveis": COLUNAS_EDITAVEIS_POR_TABELA.get(nome_tabela, []),
         "colunasFiltraveis": COLUNAS_FILTRAVEIS_POR_TABELA.get(nome_tabela, []),
     }
@@ -296,6 +335,8 @@ def gerar_csv_tabela(nome_tabela: str, edicao_id: int, filtros: Optional[dict[st
     viram uma string JSON numa única célula."""
     if nome_tabela not in TODAS_TABELAS:
         raise ValueError(f"Tabela desconhecida: {nome_tabela}")
+    if nome_tabela == "respostas_brutas":
+        return _gerar_csv_respostas_brutas(edicao_id, filtros)
     colunas = _colunas_exportacao(nome_tabela)
     buffer = io.StringIO()
     escritor = csv.DictWriter(buffer, fieldnames=colunas, extrasaction="ignore")
@@ -307,6 +348,30 @@ def gerar_csv_tabela(nome_tabela: str, edicao_id: int, filtros: Optional[dict[st
             if isinstance(valor, (dict, list)):
                 valor = json.dumps(valor, ensure_ascii=False)
             linha_formatada[c] = valor
+        escritor.writerow(linha_formatada)
+    return buffer.getvalue().encode("utf-8-sig")
+
+
+def _gerar_csv_respostas_brutas(edicao_id: int, filtros: Optional[dict[str, str]] = None) -> bytes:
+    """CSV de respostas_brutas com uma coluna por pergunta (ver
+    `_colunas_respostas_dinamicas`) em vez de uma unica celula com o jsonb
+    inteiro - contraparte de `gerar_csv_tabela` pra essa tabela. As
+    colunas de pergunta sao as mesmas pra toda a edicao (nao mudam com o
+    filtro de subpopulacao, que so' restringe quais LINHAS entram)."""
+    colunas_perguntas = _colunas_respostas_dinamicas(edicao_id)
+    colunas = ["id", "edicao_id", "subpopulacao"] + colunas_perguntas
+    buffer = io.StringIO()
+    escritor = csv.DictWriter(buffer, fieldnames=colunas, extrasaction="ignore")
+    escritor.writeheader()
+    for linha in _gerar_linhas_completas("respostas_brutas", edicao_id, filtros):
+        respostas = linha.get("respostas") or {}
+        linha_formatada = {
+            "id": linha.get("id"),
+            "edicao_id": linha.get("edicao_id"),
+            "subpopulacao": linha.get("subpopulacao"),
+        }
+        for c in colunas_perguntas:
+            linha_formatada[c] = respostas.get(c)
         escritor.writerow(linha_formatada)
     return buffer.getvalue().encode("utf-8-sig")
 
@@ -458,6 +523,7 @@ def importar_csv_tabela(nome_tabela: str, edicao_id: int, conteudo_csv: bytes) -
     com o motivo) pra a interface mostrar."""
     if nome_tabela not in COLUNAS_EDITAVEIS_POR_TABELA:
         raise ValueError(f"Tabela não editável: {nome_tabela}")
+    eh_respostas_brutas = nome_tabela == "respostas_brutas"
     colunas_permitidas = COLUNAS_EDITAVEIS_POR_TABELA[nome_tabela]
     colunas_jsonb = {"respostas_brutas": {"respostas"}}.get(nome_tabela, set())
 
@@ -476,6 +542,10 @@ def importar_csv_tabela(nome_tabela: str, edicao_id: int, conteudo_csv: bytes) -
         )
 
     ids_validos = _listar_ids_existentes(nome_tabela, edicao_id)
+    colunas_perguntas_csv = (
+        [c for c in leitor.fieldnames if c not in ("id", "edicao_id", "subpopulacao")]
+        if eh_respostas_brutas else []
+    )
 
     registros = []
     avisos = []
@@ -494,17 +564,27 @@ def importar_csv_tabela(nome_tabela: str, edicao_id: int, conteudo_csv: bytes) -
         if linha_id not in ids_validos:
             avisos.append(f"Linha {i}: id {linha_id} não pertence a esta edição/tabela - ignorada.")
             continue
-        registro: dict[str, Any] = {"id": linha_id}
-        for c in colunas_permitidas:
-            valor = linha.get(c)
-            if valor == "":
-                valor = None
-            elif c in colunas_jsonb and valor:
-                try:
-                    valor = json.loads(valor)
-                except (TypeError, ValueError):
-                    pass
-            registro[c] = valor
+        if eh_respostas_brutas:
+            # cada coluna do CSV (fora id/edicao_id/subpopulacao) e' uma
+            # pergunta - reconstroi o jsonb "respostas" a partir delas;
+            # celula vazia = sem resposta, mesma regra do processamento.
+            respostas = {
+                c: linha.get(c) for c in colunas_perguntas_csv
+                if (linha.get(c) or "").strip() != ""
+            }
+            registro: dict[str, Any] = {"id": linha_id, "respostas": respostas}
+        else:
+            registro = {"id": linha_id}
+            for c in colunas_permitidas:
+                valor = linha.get(c)
+                if valor == "":
+                    valor = None
+                elif c in colunas_jsonb and valor:
+                    try:
+                        valor = json.loads(valor)
+                    except (TypeError, ValueError):
+                        pass
+                registro[c] = valor
         registros.append(registro)
 
     if not registros:

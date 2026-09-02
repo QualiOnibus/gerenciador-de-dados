@@ -84,22 +84,23 @@
 
   .exportar-edicao{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--borda);}
   .exportar-edicao .btn-secundario{text-decoration:none;}
-  .exportar-rotulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--texto-fraco);}
+  .exportar-rotulo{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--texto-fraco);}
 
   #busca-edicao{margin-bottom:8px;}
   #tabela-edicoes-wrap{border:1px solid var(--borda);border-radius:10px;max-height:280px;overflow-y:auto;}
   table.edicoes{width:100%;border-collapse:collapse;font-size:13px;}
   table.edicoes thead tr{position:sticky;top:0;background:var(--fundo);}
-  table.edicoes th{text-align:left;padding:8px 10px;font-size:11.2px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--texto-fraco);border-bottom:1px solid var(--borda);}
+  table.edicoes th{text-align:left;padding:8px 10px;font-size:11.8px;font-weight:700;letter-spacing:.01em;color:var(--texto-fraco);border-bottom:1px solid var(--borda);}
   table.edicoes td{padding:8px 10px;border-top:1px solid var(--borda);color:var(--texto);}
   table.edicoes tbody tr[data-id]{cursor:pointer;}
   table.edicoes tbody tr[data-id]:hover{background:var(--fundo);}
   table.edicoes tbody tr.linha-selecionada{background:var(--accent-soft);}
   table.edicoes tbody tr.linha-selecionada td:first-child{color:var(--accent);font-weight:700;}
   .acoes-linha{display:flex;gap:6px;justify-content:flex-end;}
-  .btn-icone-linha{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:7px;border:1px solid var(--borda);background:var(--branco);color:var(--texto-suave);font-size:12px;cursor:pointer;white-space:nowrap;}
-  .btn-icone-linha:hover{border-color:var(--accent);color:var(--accent);}
-  .btn-icone-linha.perigo:hover{border-color:var(--erro-borda);color:var(--erro);}
+  .btn-icone-linha{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;border:1px solid var(--borda);background:var(--branco);color:var(--texto-suave);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s,color .12s;}
+  .btn-icone-linha svg{width:13px;height:13px;flex-shrink:0;}
+  .btn-icone-linha:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+  .btn-icone-linha.perigo:hover{background:var(--erro-bg);border-color:var(--erro-borda);color:var(--erro);}
 
   .dados-cabecalho{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
   .dados-cabecalho .cartao-titulo,.dados-cabecalho .cartao-descricao{margin:0;}
@@ -113,7 +114,7 @@
 
   .linha-filtros{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px dashed var(--borda);}
   .filtro-campo{min-width:150px;}
-  .filtro-campo label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--texto-fraco);margin-bottom:4px;}
+  .filtro-campo label{display:block;font-size:11.5px;font-weight:700;letter-spacing:.01em;color:var(--texto-fraco);margin-bottom:4px;}
   .filtro-campo select{padding:7px 9px;font-size:12.8px;}
 
   .abas-tabela{display:flex;flex-wrap:wrap;align-items:center;gap:2px;border-bottom:1px solid var(--borda);margin-bottom:20px;}
@@ -207,6 +208,7 @@
   .btn-perigo{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid var(--erro);background:var(--erro);color:#fff;font-size:12.6px;font-weight:600;cursor:pointer;transition:opacity .12s;}
   .btn-perigo:hover:not(:disabled){opacity:.88;}
   .btn-perigo:disabled{opacity:.45;cursor:not-allowed;}
+  .btn-primario svg,.btn-secundario svg,.btn-perigo svg{width:14px;height:14px;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -411,7 +413,7 @@
       </div>
       <div class="modal-rodape">
         <button type="button" class="btn-secundario" data-fechar-modal>Cancelar</button>
-        <button type="button" class="btn-primario" id="btn-confirmar-download">⬇ Baixar .zip</button>
+        <button type="button" class="btn-primario" id="btn-confirmar-download"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5v8.5"/><path d="M6.5 9L10 12.5 13.5 9"/><path d="M3.5 14.5v1A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-1"/></svg> Baixar .zip</button>
       </div>
     </div>
   </div>
@@ -427,7 +429,7 @@
       <p class="importar-mensagem erro" id="apagar-mensagem" hidden></p>
       <div class="modal-rodape">
         <button type="button" class="btn-secundario" data-fechar-modal>Cancelar</button>
-        <button type="button" class="btn-perigo" id="btn-confirmar-apagar" disabled>🗑 Apagar definitivamente</button>
+        <button type="button" class="btn-perigo" id="btn-confirmar-apagar" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6h11"/><path d="M8 6V4.7A1.2 1.2 0 0 1 9.2 3.5h1.6A1.2 1.2 0 0 1 12 4.7V6"/><path d="M5.5 6l.6 9a1.5 1.5 0 0 0 1.5 1.4h4.8a1.5 1.5 0 0 0 1.5-1.4l.6-9"/><path d="M8.3 9.2v4"/><path d="M11.7 9.2v4"/></svg> Apagar definitivamente</button>
       </div>
     </div>
   </div>
@@ -437,7 +439,7 @@
 
 <script>
 (function(){
-  var TABELAS_EDITAVEIS = ["edicoes", "erro_amostral", "respostas_padrao", "respostas_especifico", "respostas_brutas"];
+  var TABELAS_EDITAVEIS = ["respostas_padrao", "respostas_especifico", "respostas_brutas", "erro_amostral", "edicoes"];
   var TABELAS_SOMENTE_LEITURA = ["remapeamentos", "processing_log"];
   var RETULOS_TABELA = {
     edicoes: "Edição",
@@ -448,6 +450,22 @@
     remapeamentos: "Remapeamentos",
     processing_log: "Log de processamento",
   };
+
+  var RETULOS_COLUNA = {
+    subpopulacao: "Subpopulação",
+    modulo: "Módulo",
+    grupo: "Grupo",
+    pergunta_prefixo: "Pergunta",
+    cat_subpop: "Categoria da subpopulação",
+    categoria_variavel: "Categoria da variável",
+    variavel: "Variável",
+  };
+
+  function rotuloColuna(c){
+    if (RETULOS_COLUNA[c]) return RETULOS_COLUNA[c];
+    var texto = String(c).replace(/_/g, " ");
+    return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+  }
 
   var areaTabelas = document.getElementById("area-tabelas");
   var abasTabela = document.getElementById("abas-tabela");
@@ -519,8 +537,8 @@
         '<td>' + escapeHtml(String(e.ano)) + '</td>' +
         '<td>' + escapeHtml(String(e.semestre)) + '</td>' +
         '<td><div class="acoes-linha">' +
-          '<button type="button" class="btn-icone-linha" data-acao="baixar" data-id="' + e.id + '">⬇ Baixar dados</button>' +
-          '<button type="button" class="btn-icone-linha perigo" data-acao="apagar" data-id="' + e.id + '">🗑 Apagar</button>' +
+          '<button type="button" class="btn-icone-linha" data-acao="baixar" data-id="' + e.id + '"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5v8.5"/><path d="M6.5 9L10 12.5 13.5 9"/><path d="M3.5 14.5v1A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-1"/></svg> Baixar dados</button>' +
+          '<button type="button" class="btn-icone-linha perigo" data-acao="apagar" data-id="' + e.id + '"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6h11"/><path d="M8 6V4.7A1.2 1.2 0 0 1 9.2 3.5h1.6A1.2 1.2 0 0 1 12 4.7V6"/><path d="M5.5 6l.6 9a1.5 1.5 0 0 0 1.5 1.4h4.8a1.5 1.5 0 0 0 1.5-1.4l.6-9"/><path d="M8.3 9.2v4"/><path d="M11.7 9.2v4"/></svg> Apagar</button>' +
         '</div></td>' +
       '</tr>';
     }).join("");
@@ -640,7 +658,7 @@
     }
     linhaFiltros.hidden = false;
     linhaFiltros.innerHTML = colunasFiltraveis.map(function(c){
-      return '<div class="filtro-campo"><label>' + escapeHtml(c) + '</label><select data-filtro="' + c + '"><option value="">Todos</option></select></div>';
+      return '<div class="filtro-campo"><label>' + escapeHtml(rotuloColuna(c)) + '</label><select data-filtro="' + c + '"><option value="">Todos</option></select></div>';
     }).join("");
 
     await Promise.all(colunasFiltraveis.map(async function(c){
