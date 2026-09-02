@@ -111,6 +111,8 @@ class Handler(BaseHTTPRequestHandler):
             self._rota_edicoes()
         elif rota == "modelos":
             self._rota_modelos()
+        elif rota == "modelos/download-url":
+            self._rota_modelos_download_url(query)
         elif rota == "tabela":
             self._rota_tabela(query)
         elif rota == "tabela/valores":
@@ -125,12 +127,20 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404, "Rota nao encontrada")
 
     def do_POST(self):  # noqa: N802
+        partes = urlsplit(self.path)
+        query = parse_qs(partes.query)
+        rota = self._rota_efetiva(partes, query)
+
+        if rota == "tabela/csv/importar":
+            if not sessao_valida(self.headers.get("Cookie")):
+                self._enviar_json(401, {"ok": False, "erro": "Sessao expirada. Faca login novamente.", "precisaLogin": True})
+                return
+            self._rota_importar_csv(query)
+            return
+
         corpo = self.ler_corpo_json()
         if corpo is None:
             return
-
-        partes = urlsplit(self.path)
-        rota = self._rota_efetiva(partes, parse_qs(partes.query))
 
         if rota == "login":
             self._rota_login(corpo)
@@ -293,4 +303,41 @@ class Handler(BaseHTTPRequestHandler):
             self._enviar_json(400, {"ok": False, "erro": str(e)})
         except Exception as e:
             self._enviar_json(200, {"ok": False, "erro": f"Erro ao preparar o envio: {e}"})
+
+    def _rota_modelos_download_url(self, query: dict) -> None:
+        chave_modelo = (query.get("modelo", [""])[0] or "").strip()
+        try:
+            resultado = dm.gerar_url_download_modelo(chave_modelo)
+            self._enviar_json(200, {"ok": True, **resultado})
+        except ValueError as e:
+            self._enviar_json(400, {"ok": False, "erro": str(e)})
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao preparar o download: {e}"})
+
+    def _rota_importar_csv(self, query: dict) -> None:
+        nome_tabela = (query.get("nome", [""])[0] or "").strip()
+        edicao_id_bruto = (query.get("edicaoId", [""])[0] or "").strip()
+        if nome_tabela not in dm.COLUNAS_EDITAVEIS_POR_TABELA:
+            self._enviar_json(400, {"ok": False, "erro": "Tabela invalida ou nao editavel."})
+            return
+        try:
+            edicao_id = int(edicao_id_bruto)
+        except ValueError:
+            self._enviar_json(400, {"ok": False, "erro": "edicaoId invalido."})
+            return
+        tamanho = int(self.headers.get("Content-Length", "0"))
+        if tamanho <= 0:
+            self._enviar_json(400, {"ok": False, "erro": "Arquivo vazio."})
+            return
+        if tamanho > 4_000_000:
+            self._enviar_json(400, {"ok": False, "erro": "Arquivo grande demais (máx. ~4MB) - filtre a consulta antes de baixar/reenviar o CSV."})
+            return
+        conteudo = self.rfile.read(tamanho)
+        try:
+            resultado = dm.importar_csv_tabela(nome_tabela, edicao_id, conteudo)
+            self._enviar_json(200, {"ok": True, **resultado})
+        except ValueError as e:
+            self._enviar_json(200, {"ok": False, "erro": str(e)})
+        except Exception as e:
+            self._enviar_json(200, {"ok": False, "erro": f"Erro ao importar o CSV: {e}"})
 

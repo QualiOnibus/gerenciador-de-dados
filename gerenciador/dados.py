@@ -390,3 +390,136 @@ def gerar_url_upload_modelo(chave_modelo: str) -> dict:
         nome_arquivo, CreateSignedUploadUrlOptions(upsert="true")
     )
     return {"url": resultado["signed_url"], "caminho": nome_arquivo}
+
+
+def gerar_url_download_modelo(chave_modelo: str) -> dict:
+    """Cria uma signed URL de download pro modelo `chave_modelo` - o
+    navegador baixa direto do Supabase Storage (sem passar pelo corpo
+    desta função serverless: o modelo do relatório comprimido já passa de
+    9MB). `comprimido` indica se quem baixar precisa descomprimir (gzip)
+    antes de usar o arquivo como SVG."""
+    if chave_modelo not in MODELOS_STORAGE:
+        raise ValueError("Modelo inválido.")
+    nome_arquivo = MODELOS_STORAGE[chave_modelo]
+    sb = _supabase_client()
+    resultado = sb.storage.from_(BUCKET_MODELOS).create_signed_url(nome_arquivo, 300)
+    url = resultado.get("signedUrl") or resultado.get("signedURL")
+    if not url:
+        raise ValueError("Este modelo ainda não foi publicado no Storage.")
+    return {
+        "url": url,
+        "comprimido": nome_arquivo.endswith(".gz"),
+        "nomeSugerido": nome_arquivo[:-3] if nome_arquivo.endswith(".gz") else nome_arquivo,
+    }
+
+
+# --- Importar CSV (atualizar em lote uma tabela de uma edição) ---
+# Contraparte de `gerar_csv_tabela`: o usuário baixa o CSV, edita no
+# computador (Excel/Planilhas) e reenvia aqui. So' atualiza linhas que ja'
+# existem nesta tabela+edição (por "id") - nao cria linha nova, pra nao
+# arriscar gravar uma linha incompleta por engano (faltando subpopulacao,
+# por exemplo). Colunas fora de COLUNAS_EDITAVEIS_POR_TABELA no CSV sao
+# ignoradas, mesma regra de `atualizar_linha`.
+TAMANHO_LOTE_IMPORTACAO = 200
+
+
+def _listar_ids_existentes(nome_tabela: str, edicao_id: int) -> set:
+    sb = _supabase_client()
+    coluna_filtro = _coluna_filtro(nome_tabela)
+    ids: set = set()
+    pagina = 0
+    while True:
+        inicio = pagina * TAMANHO_LOTE_EXPORTACAO
+        resp = (
+            sb.table(nome_tabela)
+            .select("id")
+            .eq(coluna_filtro, edicao_id)
+            .range(inicio, inicio + TAMANHO_LOTE_EXPORTACAO - 1)
+            .execute()
+        )
+        linhas = resp.data or []
+        ids.update(linha["id"] for linha in linhas)
+        if len(linhas) < TAMANHO_LOTE_EXPORTACAO:
+            break
+        pagina += 1
+    return ids
+
+
+def importar_csv_tabela(nome_tabela: str, edicao_id: int, conteudo_csv: bytes) -> dict:
+    """Lê `conteudo_csv` (mesmo formato de `gerar_csv_tabela`: cabeçalho
+    com "id" + as colunas da tabela) e atualiza, em lotes, as linhas cujo
+    "id" já pertence a `nome_tabela`/`edicao_id`. Devolve quantas linhas
+    do arquivo foram atualizadas e a lista de avisos (linhas ignoradas,
+    com o motivo) pra a interface mostrar."""
+    if nome_tabela not in COLUNAS_EDITAVEIS_POR_TABELA:
+        raise ValueError(f"Tabela não editável: {nome_tabela}")
+    colunas_permitidas = COLUNAS_EDITAVEIS_POR_TABELA[nome_tabela]
+    colunas_jsonb = {"respostas_brutas": {"respostas"}}.get(nome_tabela, set())
+
+    try:
+        texto = conteudo_csv.decode("utf-8-sig")
+    except UnicodeDecodeError as e:
+        raise ValueError(
+            f"Não foi possível ler o arquivo como texto UTF-8 ({e}). "
+            "Se editou no Excel, salve como \"CSV UTF-8 (Delimitado por vírgulas)\"."
+        )
+    leitor = csv.DictReader(io.StringIO(texto))
+    if not leitor.fieldnames or "id" not in leitor.fieldnames:
+        raise ValueError(
+            "O CSV precisa ter uma coluna \"id\" - baixe o CSV desta própria consulta "
+            "antes de editar, pra garantir o formato certo."
+        )
+
+    ids_validos = _listar_ids_existentes(nome_tabela, edicao_id)
+
+    registros = []
+    avisos = []
+    total_linhas = 0
+    for i, linha in enumerate(leitor, start=2):  # linha 1 e' o cabecalho
+        total_linhas += 1
+        id_bruto = (linha.get("id") or "").strip()
+        if not id_bruto:
+            avisos.append(f"Linha {i}: sem \"id\" - ignorada (atualiza linhas existentes, não cria linhas novas).")
+            continue
+        try:
+            linha_id = int(id_bruto)
+        except ValueError:
+            avisos.append(f"Linha {i}: id \"{id_bruto}\" inválido - ignorada.")
+            continue
+        if linha_id not in ids_validos:
+            avisos.append(f"Linha {i}: id {linha_id} não pertence a esta edição/tabela - ignorada.")
+            continue
+        registro: dict[str, Any] = {"id": linha_id}
+        for c in colunas_permitidas:
+            valor = linha.get(c)
+            if valor == "":
+                valor = None
+            elif c in colunas_jsonb and valor:
+                try:
+                    valor = json.loads(valor)
+                except (TypeError, ValueError):
+                    pass
+            registro[c] = valor
+        registros.append(registro)
+
+    if not registros:
+        detalhe = " ".join(avisos[:5])
+        raise ValueError("Nenhuma linha válida pra atualizar. " + detalhe)
+
+    sb = _supabase_client()
+    atualizadas = 0
+    erros_lote = []
+    for inicio in range(0, len(registros), TAMANHO_LOTE_IMPORTACAO):
+        lote = registros[inicio:inicio + TAMANHO_LOTE_IMPORTACAO]
+        try:
+            sb.table(nome_tabela).upsert(lote, on_conflict="id").execute()
+            atualizadas += len(lote)
+        except Exception as e:
+            erros_lote.append(f"Linhas com id entre {lote[0]['id']} e {lote[-1]['id']}: {e}")
+
+    return {
+        "linhasNoArquivo": total_linhas,
+        "linhasAtualizadas": atualizadas,
+        "avisos": avisos,
+        "erros": erros_lote,
+    }

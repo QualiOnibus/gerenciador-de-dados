@@ -82,14 +82,28 @@
   select,input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--borda);border-radius:8px;font-size:13.8px;font-family:inherit;color:var(--texto);background:var(--branco);transition:border-color .12s;}
   select:focus,input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
 
-  .linha-downloads{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
-  .linha-downloads .btn-secundario{text-decoration:none;}
+  .exportar-edicao{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--borda);}
+  .exportar-edicao .btn-secundario{text-decoration:none;}
+  .exportar-rotulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--texto-fraco);}
+
+  .dados-cabecalho{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+  .dados-cabecalho .cartao-titulo,.dados-cabecalho .cartao-descricao{margin:0;}
+  .dados-cabecalho .cartao-descricao{margin-top:4px;}
+
+  .barra-tabela{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;margin-bottom:16px;background:var(--branco);border:1px solid var(--borda);border-radius:10px;}
+  .barra-tabela .btn-secundario{text-decoration:none;}
+  .barra-separador{width:1px;align-self:stretch;background:var(--borda);}
+  @media (max-width:640px){.barra-separador{display:none;}}
+  .importar-mensagem{margin:-6px 0 16px;font-size:12.6px;padding:10px 12px;border-radius:8px;}
+  .importar-mensagem.erro{background:var(--erro-bg);border:1px solid var(--erro-borda);color:var(--erro);}
+  .importar-mensagem.sucesso{background:var(--sucesso-bg);border:1px solid var(--sucesso-borda);color:var(--sucesso);}
+  .importar-mensagem.info{background:var(--accent-soft);border:1px solid var(--borda);color:var(--texto-suave);}
+  .importar-mensagem ul{margin:6px 0 0;padding-left:18px;}
 
   .linha-filtros{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px dashed var(--borda);}
   .filtro-campo{min-width:150px;}
   .filtro-campo label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--texto-fraco);margin-bottom:4px;}
   .filtro-campo select{padding:7px 9px;font-size:12.8px;}
-  .link-csv{margin-left:auto;}
 
   .abas-tabela{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
   .aba-tabela{padding:7px 13px;border-radius:20px;border:1px solid var(--borda);background:var(--branco);color:var(--texto-suave);font-size:12.6px;font-weight:600;cursor:pointer;}
@@ -97,10 +111,28 @@
   .aba-tabela.ativa{background:var(--accent);border-color:var(--accent);color:#fff;}
   .aba-tabela.somente-leitura::after{content:" 🔒";}
 
-  .modelo-item{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid var(--borda);border-radius:12px;background:var(--fundo);}
-  .modelo-titulo{margin:0;font-size:13.8px;font-weight:700;color:var(--texto);}
-  .modelo-status{margin:0;font-size:12.6px;color:var(--texto-suave);}
-  .modelo-item input[type=file]{font-size:12.3px;color:var(--texto-suave);}
+  .btn-primario{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:12.6px;font-weight:600;cursor:pointer;transition:opacity .12s;}
+  .btn-primario:hover:not(:disabled){opacity:.88;}
+  .btn-primario:disabled{opacity:.45;cursor:not-allowed;}
+
+  .rotulo-arquivo{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;border:1px solid var(--borda);background:var(--branco);font-size:12.6px;color:var(--texto-suave);cursor:pointer;white-space:nowrap;transition:border-color .12s,color .12s;}
+  .rotulo-arquivo:hover{border-color:var(--accent);color:var(--accent);}
+  .nome-arquivo-selecionado{font-size:12px;color:var(--texto-fraco);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  .pilula{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10.6px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;flex-shrink:0;}
+  .pilula.publicado{background:var(--sucesso-bg);color:var(--sucesso);border:1px solid var(--sucesso-borda);}
+  .pilula.pendente{background:var(--aviso-bg);color:var(--aviso);border:1px solid var(--aviso-borda);}
+
+  .grade-modelos{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:640px){.grade-modelos{grid-template-columns:1fr;}}
+  .modelo-card{display:flex;flex-direction:column;gap:14px;padding:18px 20px;border:1px solid var(--borda);border-radius:14px;background:var(--fundo);}
+  .modelo-cabecalho{display:flex;align-items:flex-start;gap:12px;}
+  .modelo-icone{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;background:var(--accent-soft);color:var(--accent);}
+  .modelo-info{flex:1;min-width:0;}
+  .modelo-titulo{margin:0 0 3px;font-size:13.8px;font-weight:700;color:var(--texto);}
+  .modelo-meta{margin:0;font-size:12px;color:var(--texto-suave);}
+  .modelo-acoes{display:flex;flex-wrap:wrap;gap:8px;}
+  .modelo-upload{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:13px;border-top:1px dashed var(--borda);}
   .modelo-mensagem{margin:0;font-size:12.3px;}
   .modelo-mensagem.erro{color:var(--erro);}
   .modelo-mensagem.sucesso{color:var(--sucesso);}
@@ -232,23 +264,39 @@
 
   <div class="cartao">
     <h2 class="cartao-titulo">Edição</h2>
-    <p class="cartao-descricao">Escolha a edição da pesquisa cujos dados você quer consultar ou editar.</p>
+    <p class="cartao-descricao">Escolha a edição da pesquisa cujos dados você quer consultar, editar ou exportar.</p>
     <div class="campo">
       <label class="rotulo" for="select-edicao">Edição</label>
       <select id="select-edicao">
         <option value="">Carregando edições...</option>
       </select>
     </div>
-    <div class="linha-downloads">
-      <a id="link-baixar-edicao" class="btn-secundario" hidden>⬇ Baixar tudo desta edição (.zip)</a>
-      <a id="link-baixar-completo" class="btn-secundario" href="/api/exportar/completo">⬇ Baixar a base de dados completa (.zip)</a>
+    <div class="exportar-edicao">
+      <span class="exportar-rotulo">Exportar</span>
+      <a id="link-baixar-edicao" class="btn-secundario" hidden>⬇ Esta edição (.zip)</a>
+      <a id="link-baixar-completo" class="btn-secundario" href="/api/exportar/completo">⬇ Base de dados completa (.zip)</a>
     </div>
   </div>
 
   <div class="cartao" id="cartao-tabela" hidden>
-    <h2 class="cartao-titulo">Dados</h2>
-    <p class="cartao-descricao">Tabelas com 🔒 são somente leitura (registros de auditoria). Clique numa célula das demais tabelas para editar o valor.</p>
+    <div class="dados-cabecalho">
+      <div>
+        <h2 class="cartao-titulo">Dados</h2>
+        <p class="cartao-descricao">Tabelas com 🔒 são somente leitura (registros de auditoria). Clique numa célula das demais pra editar o valor direto aqui - ou baixe o CSV, edite em lote no computador e reenvie.</p>
+      </div>
+    </div>
     <div class="abas-tabela" id="abas-tabela"></div>
+    <div class="barra-tabela" id="barra-tabela">
+      <a class="btn-secundario" id="link-baixar-csv">⬇ Baixar CSV desta consulta</a>
+      <span class="barra-separador" id="barra-separador-importar" hidden></span>
+      <label class="rotulo-arquivo" id="rotulo-importar-csv" hidden>
+        📁 Escolher CSV editado
+        <input type="file" accept=".csv" id="input-importar-csv" hidden>
+      </label>
+      <span class="nome-arquivo-selecionado" id="nome-csv-selecionado"></span>
+      <button type="button" class="btn-primario" id="btn-importar-csv" hidden disabled>⬆ Enviar e atualizar</button>
+    </div>
+    <p class="importar-mensagem" id="importar-mensagem" hidden></p>
     <div class="linha-filtros" id="linha-filtros" hidden></div>
     <div id="area-grade">
       <p class="caixa info">Escolha uma edição para ver os dados.</p>
@@ -257,20 +305,50 @@
 
   <div class="cartao" id="cartao-modelos">
     <h2 class="cartao-titulo">Modelos (relatório e síntese)</h2>
-    <p class="cartao-descricao">Envie um novo modelo SVG pra substituir o que o Gerador de Relatório usa hoje. O envio vai direto pro Supabase Storage e passa a valer nas próximas gerações em até 5 minutos.</p>
-    <div class="grid2" id="grade-modelos">
-      <div class="modelo-item" data-modelo="relatorio">
-        <h3 class="modelo-titulo">Modelo do relatório completo</h3>
-        <p class="modelo-status" data-status>Carregando...</p>
-        <input type="file" accept=".svg" data-arquivo>
-        <button type="button" class="btn-secundario" data-enviar>⬆ Enviar novo modelo</button>
+    <p class="cartao-descricao">Baixe o modelo atual pra editar localmente, ou envie uma versão nova pra substituir a que o Gerador de Relatório usa hoje - o envio vai direto pro Supabase Storage e passa a valer nas próximas gerações em até 5 minutos.</p>
+    <div class="grade-modelos" id="grade-modelos">
+      <div class="modelo-card" data-modelo="relatorio">
+        <div class="modelo-cabecalho">
+          <span class="modelo-icone">📊</span>
+          <div class="modelo-info">
+            <h3 class="modelo-titulo">Relatório completo</h3>
+            <p class="modelo-meta" data-status>Carregando...</p>
+          </div>
+          <span class="pilula" data-pilula hidden></span>
+        </div>
+        <div class="modelo-acoes">
+          <button type="button" class="btn-secundario" data-baixar disabled>⬇ Baixar modelo atual</button>
+        </div>
+        <div class="modelo-upload">
+          <label class="rotulo-arquivo">
+            📁 Escolher arquivo
+            <input type="file" accept=".svg" data-arquivo hidden>
+          </label>
+          <span class="nome-arquivo-selecionado" data-nome-arquivo>Nenhum arquivo selecionado</span>
+          <button type="button" class="btn-primario" data-enviar>⬆ Enviar novo modelo</button>
+        </div>
         <p class="modelo-mensagem" data-mensagem hidden></p>
       </div>
-      <div class="modelo-item" data-modelo="sintese">
-        <h3 class="modelo-titulo">Modelo da síntese (1 página)</h3>
-        <p class="modelo-status" data-status>Carregando...</p>
-        <input type="file" accept=".svg" data-arquivo>
-        <button type="button" class="btn-secundario" data-enviar>⬆ Enviar novo modelo</button>
+      <div class="modelo-card" data-modelo="sintese">
+        <div class="modelo-cabecalho">
+          <span class="modelo-icone">🧾</span>
+          <div class="modelo-info">
+            <h3 class="modelo-titulo">Síntese (1 página)</h3>
+            <p class="modelo-meta" data-status>Carregando...</p>
+          </div>
+          <span class="pilula" data-pilula hidden></span>
+        </div>
+        <div class="modelo-acoes">
+          <button type="button" class="btn-secundario" data-baixar disabled>⬇ Baixar modelo atual</button>
+        </div>
+        <div class="modelo-upload">
+          <label class="rotulo-arquivo">
+            📁 Escolher arquivo
+            <input type="file" accept=".svg" data-arquivo hidden>
+          </label>
+          <span class="nome-arquivo-selecionado" data-nome-arquivo>Nenhum arquivo selecionado</span>
+          <button type="button" class="btn-primario" data-enviar>⬆ Enviar novo modelo</button>
+        </div>
         <p class="modelo-mensagem" data-mensagem hidden></p>
       </div>
     </div>
@@ -299,6 +377,12 @@
   var areaGrade = document.getElementById("area-grade");
   var linhaFiltros = document.getElementById("linha-filtros");
   var linkBaixarEdicao = document.getElementById("link-baixar-edicao");
+  var rotuloImportarCsv = document.getElementById("rotulo-importar-csv");
+  var barraSeparadorImportar = document.getElementById("barra-separador-importar");
+  var inputImportarCsv = document.getElementById("input-importar-csv");
+  var nomeCsvSelecionado = document.getElementById("nome-csv-selecionado");
+  var btnImportarCsv = document.getElementById("btn-importar-csv");
+  var importarMensagem = document.getElementById("importar-mensagem");
 
   var estado = { edicaoId: null, tabela: null, pagina: 0, filtros: {} };
   var filtrosChaveAtual = null;
@@ -357,6 +441,7 @@
         estado.pagina = 0;
         estado.filtros = {};
         atualizarAbaAtiva();
+        atualizarBarraImportacao();
         carregarGrade();
       });
     });
@@ -366,6 +451,17 @@
     abasTabela.querySelectorAll(".aba-tabela").forEach(function(botao){
       botao.classList.toggle("ativa", botao.dataset.tabela === estado.tabela);
     });
+  }
+
+  function atualizarBarraImportacao(){
+    var somenteLeitura = TABELAS_SOMENTE_LEITURA.indexOf(estado.tabela) !== -1;
+    rotuloImportarCsv.hidden = somenteLeitura;
+    barraSeparadorImportar.hidden = somenteLeitura;
+    btnImportarCsv.hidden = somenteLeitura;
+    inputImportarCsv.value = "";
+    nomeCsvSelecionado.textContent = "";
+    btnImportarCsv.disabled = true;
+    importarMensagem.hidden = true;
   }
 
   function montarQueryTabela(){
@@ -385,9 +481,9 @@
   }
 
   async function sincronizarFiltros(colunasFiltraveis){
+    atualizarLinkCsv();
     var chave = estado.tabela + "|" + estado.edicaoId;
     if (chave === filtrosChaveAtual){
-      atualizarLinkCsv();
       return;
     }
     filtrosChaveAtual = chave;
@@ -399,8 +495,7 @@
     linhaFiltros.hidden = false;
     linhaFiltros.innerHTML = colunasFiltraveis.map(function(c){
       return '<div class="filtro-campo"><label>' + escapeHtml(c) + '</label><select data-filtro="' + c + '"><option value="">Todos</option></select></div>';
-    }).join("") + '<a class="btn-secundario link-csv" id="link-baixar-csv">⬇ Baixar CSV desta consulta</a>';
-    atualizarLinkCsv();
+    }).join("");
 
     await Promise.all(colunasFiltraveis.map(async function(c){
       var select = linhaFiltros.querySelector('select[data-filtro="' + c + '"]');
@@ -554,7 +649,56 @@
     linkBaixarEdicao.href = "/api/exportar/edicao?edicaoId=" + encodeURIComponent(estado.edicaoId);
     if (!estado.tabela) estado.tabela = TABELAS_EDITAVEIS[0];
     atualizarAbaAtiva();
+    atualizarBarraImportacao();
     carregarGrade();
+  });
+
+  inputImportarCsv.addEventListener("change", function(){
+    var arquivo = inputImportarCsv.files[0];
+    nomeCsvSelecionado.textContent = arquivo ? arquivo.name : "";
+    btnImportarCsv.disabled = !arquivo;
+  });
+
+  btnImportarCsv.addEventListener("click", async function(){
+    var arquivo = inputImportarCsv.files[0];
+    if (!arquivo || !estado.tabela || !estado.edicaoId) return;
+    btnImportarCsv.disabled = true;
+    importarMensagem.hidden = false;
+    importarMensagem.className = "importar-mensagem info";
+    importarMensagem.textContent = "Enviando e atualizando...";
+    try{
+      var texto = await arquivo.text();
+      var params = new URLSearchParams();
+      params.set("nome", estado.tabela);
+      params.set("edicaoId", estado.edicaoId);
+      var resp = await chamarApi("/api/tabela/csv/importar?" + params.toString(), {
+        method: "POST",
+        headers: {"Content-Type": "text/csv; charset=utf-8"},
+        body: texto,
+      });
+      if (!resp.ok){
+        importarMensagem.className = "importar-mensagem erro";
+        importarMensagem.textContent = resp.erro || "Erro ao importar o CSV.";
+        return;
+      }
+      var resumo = resp.linhasAtualizadas + " de " + resp.linhasNoArquivo + " linha" + (resp.linhasNoArquivo === 1 ? "" : "s") + " do arquivo foram atualizadas.";
+      var avisos = (resp.avisos || []).concat(resp.erros || []);
+      importarMensagem.className = avisos.length ? "importar-mensagem info" : "importar-mensagem sucesso";
+      var html = "<strong>" + escapeHtml(resumo) + "</strong>";
+      if (avisos.length){
+        html += "<ul>" + avisos.slice(0, 20).map(function(a){ return "<li>" + escapeHtml(a) + "</li>"; }).join("") + "</ul>";
+        if (avisos.length > 20) html += "<p>(+" + (avisos.length - 20) + " outros avisos)</p>";
+      }
+      importarMensagem.innerHTML = html;
+      inputImportarCsv.value = "";
+      nomeCsvSelecionado.textContent = "";
+      carregarGrade();
+    } catch(e){
+      importarMensagem.className = "importar-mensagem erro";
+      importarMensagem.textContent = "Erro de conexão ao importar.";
+    } finally {
+      btnImportarCsv.disabled = !inputImportarCsv.files.length;
+    }
   });
 
   var MODELOS_LABEL = { relatorio: "Modelo do relatório completo", sintese: "Modelo da síntese (1 página)" };
@@ -574,6 +718,8 @@
     return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
+  var modelosPublicados = {};
+
   async function carregarModelos(){
     try{
       var resp = await chamarApi("/api/modelos");
@@ -583,12 +729,23 @@
       }
       supabaseAnonKeyAtual = resp.supabaseAnonKey || "";
       Object.keys(MODELOS_LABEL).forEach(function(chave){
-        var item = document.querySelector('.modelo-item[data-modelo="' + chave + '"]');
+        var item = document.querySelector('.modelo-card[data-modelo="' + chave + '"]');
         var status = item.querySelector("[data-status]");
+        var pilula = item.querySelector("[data-pilula]");
+        var botaoBaixar = item.querySelector("[data-baixar]");
         var info = resp.modelos[chave];
-        status.textContent = info
-          ? "Atualizado em " + formatarDataHora(info.atualizadoEm) + " · " + formatarBytes(info.tamanhoBytes)
-          : "Nenhum modelo enviado ainda — usando o modelo padrão do repositório.";
+        modelosPublicados[chave] = !!info;
+        botaoBaixar.disabled = !info;
+        pilula.hidden = false;
+        if (info){
+          status.textContent = "Atualizado em " + formatarDataHora(info.atualizadoEm) + " · " + formatarBytes(info.tamanhoBytes);
+          pilula.className = "pilula publicado";
+          pilula.textContent = "Publicado";
+        } else {
+          status.textContent = "Usando o modelo padrão do repositório (nenhum enviado por aqui ainda).";
+          pilula.className = "pilula pendente";
+          pilula.textContent = "Não publicado";
+        }
         if (!supabaseAnonKeyAtual){
           var msg = item.querySelector("[data-mensagem]");
           msg.hidden = false;
@@ -598,6 +755,52 @@
       });
     } catch(e){
       document.querySelectorAll("[data-status]").forEach(function(el){ el.textContent = "Erro de conexão."; });
+    }
+  }
+
+  async function baixarModelo(chave, item){
+    var msg = item.querySelector("[data-mensagem]");
+    var botao = item.querySelector("[data-baixar]");
+    botao.disabled = true;
+    msg.hidden = false; msg.className = "modelo-mensagem"; msg.textContent = "Preparando download...";
+    try{
+      var respUrl = await chamarApi("/api/modelos/download-url?modelo=" + encodeURIComponent(chave));
+      if (!respUrl.ok){
+        msg.className = "modelo-mensagem erro"; msg.textContent = respUrl.erro || "Erro ao preparar o download.";
+        return;
+      }
+      msg.textContent = "Baixando...";
+      var respArquivo = await fetch(respUrl.url);
+      if (!respArquivo.ok) throw new Error("HTTP " + respArquivo.status);
+      var buffer = await respArquivo.arrayBuffer();
+      var blob;
+      if (respUrl.comprimido){
+        msg.textContent = "Descompactando...";
+        if (typeof DecompressionStream === "undefined"){
+          msg.className = "modelo-mensagem erro";
+          msg.textContent = "Este navegador não suporta descompactar o download (DecompressionStream). Use uma versão recente do Chrome/Edge.";
+          return;
+        }
+        var descomprimido = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
+        blob = await new Response(descomprimido).blob();
+      } else {
+        blob = new Blob([buffer], { type: "image/svg+xml" });
+      }
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = respUrl.nomeSugerido || (chave + ".svg");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      msg.className = "modelo-mensagem sucesso";
+      msg.textContent = "Download concluído.";
+    } catch(e){
+      msg.className = "modelo-mensagem erro";
+      msg.textContent = "Erro ao baixar: " + e.message;
+    } finally {
+      botao.disabled = !modelosPublicados[chave];
     }
   }
 
@@ -655,6 +858,8 @@
       msg.className = "modelo-mensagem sucesso";
       msg.textContent = "Modelo enviado! O Gerador de Relatório passa a usá-lo em até 5 minutos.";
       input.value = "";
+      var nomeArquivo = item.querySelector("[data-nome-arquivo]");
+      if (nomeArquivo) nomeArquivo.textContent = "Nenhum arquivo selecionado";
       await carregarModelos();
     } catch(e){
       msg.hidden = false;
@@ -665,9 +870,15 @@
     }
   }
 
-  document.querySelectorAll(".modelo-item").forEach(function(item){
+  document.querySelectorAll(".modelo-card").forEach(function(item){
     var chave = item.getAttribute("data-modelo");
+    var inputArquivo = item.querySelector("[data-arquivo]");
+    var nomeArquivo = item.querySelector("[data-nome-arquivo]");
+    inputArquivo.addEventListener("change", function(){
+      nomeArquivo.textContent = inputArquivo.files[0] ? inputArquivo.files[0].name : "Nenhum arquivo selecionado";
+    });
     item.querySelector("[data-enviar]").addEventListener("click", function(){ enviarModelo(chave, item); });
+    item.querySelector("[data-baixar]").addEventListener("click", function(){ baixarModelo(chave, item); });
   });
 
   window.iniciarGerenciadorDados = function(){
